@@ -1,0 +1,843 @@
+Type item
+    c As Integer
+    adrenaline As Integer
+    rhq73i As Integer
+    rhq73s As Integer
+End Type
+
+Type shopwep
+    names As String * 18
+    ATTACKP As Integer
+    RANGE As Integer
+    acc As Integer
+    price As Integer
+End Type
+
+Type shopupgrad
+    upgname As String * 18
+    ATTACKP As Integer
+    RANGE As Integer
+    acc As Integer
+    price As Integer
+    forwep As String * 18
+    upg As Integer
+End Type
+
+Type au
+    accupg As Integer
+End Type
+
+Type shopsellprice
+    sellprice As Integer
+End Type
+
+Sub shop (state as GameState, ally() As allystat, title$, item() As item, shopupgrades() As shopupgrad, maxshowupg As Integer, shopweapons() As shopwep, maxshowwep As Integer)
+    sounds = 10
+    Const maxfreq = 1000 'max frequency (in Hz)
+    Const SFREQ = 700 'starting frequency (Hz)
+    Const MINFREQ = 200 'minimum frequency (Hz)
+    Const MULTIPLIER = 1.1 'frequency multiplier (or divider)
+    Const slength = .1 'note length in clockticks (18.2 per sec)
+
+    Dim acceptu(17) As au
+    Dim sellp(10) As shopsellprice
+
+    y = 0
+    X = 0
+    Do
+        X = X + 1
+        pprice = ally(X).price
+        Randomize Timer
+        NEG = Int(Rnd * 2)
+        NEG = NEG - 1
+        If NEG = 0 Then NEG = 1
+        Randomize Timer
+        sellp(X).sellprice = (pprice / 2) + ((Int(Rnd * (pprice / 2)) + 1) * NEG)
+    Loop Until X = 4
+
+
+    Dim BOX(196)
+
+    RCOL = 1
+    vercol = 0
+    txt = 1
+
+    GoSub upgupdate
+
+
+    Cls 0
+    View Print 1 to 30
+    Line (0, 0)-(14, 14), 4, BF
+    Get (0, 0)-(14, 14), BOX()
+    Cls 0
+
+    GoSub messagetitlescroll
+
+    Put (313, 385), BOX()
+
+    Do
+
+        nomore = 0
+        Color 15
+
+        vercol = 0
+        GoSub DRAWLEFTCOL1
+        GoSub drawrightcol1
+
+        Do
+            chor$ = InKey$
+
+            Select Case chor$
+
+                Case Chr$(13)
+                    GoSub selectsound
+                    Exit Do
+
+
+                Case Chr$(32)
+                    Line (313, 81)-(623, 368), 0, BF
+                    If RCOL >= 3 Then Line (15, 80)-(272, 257), 0, BF
+
+                    RCOL = RCOL + 1
+                    If RCOL > 4 Then RCOL = 1
+
+                    Select Case RCOL
+
+                        Case 1
+                            txt = 1
+                            GoSub DRAWLEFTCOL1
+                            GoSub drawrightcol1
+                            Put (561, 385), BOX(), Xor
+                            Put (313, 385), BOX()
+
+                        Case 2
+                            txt = 2
+                            GoSub drawrightcol1
+                            Put (313, 385), BOX(), Xor
+                            Put (401, 385), BOX()
+
+                        Case 3
+                            GoSub DRAWLEFTCOL1
+                            GoSub drawrightcol3
+                            Put (401, 385), BOX(), Xor
+                            Put (497, 385), BOX()
+
+                        Case 4
+                            GoSub DRAWleftCOL2
+                            GoSub drawrightcol2
+                            Put (497, 385), BOX(), Xor
+                            Put (561, 385), BOX()
+                    End Select
+                    GoSub scrollsound
+
+                Case Chr$(27)
+                    GoSub selectsound
+                    Exit Sub
+            End Select
+        Loop
+
+
+
+
+        vercol = 7
+        hozcol = 38
+        If RCOL = 4 Then vercol = 6
+        If RCOL = 3 Then hozcol = 1
+        Color 4
+        Locate vercol, hozcol
+        Print "o"
+
+
+        If RCOL = 2 Then
+            GoSub DRAWLEFTCOL1
+        End If
+
+
+
+        Do
+
+            chor$ = InKey$
+
+            Select Case chor$
+
+                Case Chr$(13)
+                    GoSub selectsound
+                    Select Case RCOL
+
+                        Case 1
+                            If shopweapons(vercol - 6).price <= state.cash Then Exit Do
+                        Case 2
+                            If shopupgrades(vercol - 6).price <= state.cash Then Exit Do
+                        Case 3
+                            If ally(((vercol - 6) / 3) + 1).weapon = "wushu             " Then
+                            Else
+                                GoSub sell
+                                nomore = 1
+                                Exit Do
+                            End If
+                        Case 4
+                            If state.cash >= item(((vercol - 6) / 3) + 1).c And (((vercol - 6) / 3) + 1) <= 3 Then Exit Do
+                            If state.cash >= item(((vercol - 6) / 3) + 1).c And (((vercol - 6) / 3) + 1) > 3 Then
+                                itsell = 1
+                                GoSub buyitem
+                                nomore = 1
+                                Locate vercol, hozcol
+                                Print " "
+                                Exit Do
+                            End If
+
+                    End Select
+
+                Case Chr$(32)
+                    GoSub scrollsound
+                    Locate vercol, hozcol
+                    Print " "
+
+                    Select Case RCOL
+                        Case 4
+                            vercol = vercol + 3
+                            If vercol = 24 Then vercol = 6
+                        Case 3
+                            Do
+                                no = 0
+                                vercol = vercol + 3
+                                If vercol = 19 Then vercol = 7
+                                If vercol > 7 And ally(((vercol - 7) / 3) + 1).exist = 0 Then no = 1
+                            Loop Until no = 0
+                        Case 2
+                            vercol = vercol + 1
+                            If vercol > (maxshowupg + 6) Then vercol = 7
+                            GoSub DRAWLEFTCOL1
+                        Case 1
+                            vercol = vercol + 1
+                            If vercol > (maxshowwep + 6) Then vercol = 7
+                    End Select
+                    Color 4
+                    Locate vercol, hozcol
+                    Print "o"
+
+                Case Chr$(27)
+                    Locate vercol, hozcol
+                    Print " "
+                    nomore = 1
+                    GoSub selectsound
+                    Exit Do
+
+            End Select
+
+        Loop
+
+        Locate vercol, hozcol
+        Print " "
+
+        svercol1 = 6
+        vercol1 = 6
+        hozcol1 = 1
+
+        If nomore = 0 Then
+            Locate vercol1, hozcol1
+            Print "o"
+
+            Do
+                chor$ = InKey$
+
+                Select Case chor$
+
+                    Case Chr$(32)
+                        GoSub scrollsound
+                        Locate vercol1, hozcol1
+                        Print " "
+                        Do
+                            no = 0
+                            vercol1 = vercol1 + 3
+                            If vercol1 = (svercol1 + 12) Then vercol1 = svercol1
+                            If vercol1 > svercol1 And ally(((vercol1 - svercol1) / 3) + 1).exist = 0 Then no = 1
+                        Loop Until no = 0
+                        Locate vercol1, hozcol1
+                        Print "o"
+
+
+                    Case Chr$(13)
+                        GoSub selectsound
+                        Select Case RCOL
+                            Case 1
+                                If ally(((vercol1 - 7) / 3) + 1).weapon = "wushu             " Then GoSub buywep
+                            Case 2
+                                If UCase$(ally(((vercol1 - 7) / 3) + 1).weapon) = UCase$(shopupgrades(vercol - 6).forwep) And ally(((vercol1 - 7) / 3) + 1).upg = 15 Then GoSub buyupg
+                            Case 4
+                                itsell = 2
+                                GoSub buyitem
+                        End Select
+                        If nomore = 1 Then
+                            Locate vercol1, hozcol1
+                            Print " "
+                            Exit Do
+                        End If
+
+                    Case Chr$(27)
+                        Locate vercol1, hozcol1
+                        Print " "
+                        GoSub selectsound
+                        Exit Do
+
+                End Select
+            Loop
+
+        End If
+
+
+    Loop
+
+
+
+    'DRAWRIGHTCOL1:
+    'NOTE WILL HAVE TWO TXT MODES 1 FOR WEAPONS 1 FOR UPG'S
+    'TXTMODE = 1 FOR WEP 2 FOR UPG MAKE TO GOSUBS TXTMODEWEP & TXTMODEUPG
+
+
+
+
+
+
+    drawrightcol1:
+    If txt = 1 Then
+        GoSub TXTMODEWEP
+    Else
+        GoSub TXTMODEUPG
+    End If
+    looplimit = 18
+    LOOPING = 0
+    X = 312
+    y = 80
+    Do
+        Line (X, y)-(X + 312, y + 16), 9, B
+        Line (X + 176, y)-(X + 176, y + 16), 9
+        Line (X + 208, y)-(X + 208, y + 16), 9
+        Line (X + 240, y)-(X + 240, y + 16), 9
+        Line (X + 270, y)-(X + 270, y + 16), 9
+        If LOOPING = (looplimit - 1) Then Line (X, y + 16)-(X + 312, y + 16), 9
+        LOOPING = LOOPING + 1
+        y = y + 16
+    Loop Until LOOPING = looplimit
+    Return
+
+
+
+
+
+
+    drawrightcol2:
+    looplimit = 6
+    LOOPING = 0
+    X = 312
+    y = 80
+    Do
+        If state.cash >= item(LOOPING + 1).c Then
+            Color 9
+            IC = 15
+            IC1 = 9
+        Else
+            Color 8
+            IC = 8
+            IC1 = 8
+        End If
+
+        Locate (y + 16) / 16, 41
+        Select Case LOOPING
+            Case 0
+                Print "EPOLIN SHOT       PRICE  "
+                Locate (y + 32) / 16, 41
+                Color IC
+                Print "HEALS MOST INJURIES."
+                Locate (y + 48) / 16, 41
+                Print "INCREASES  HEALTH BY 25"
+            Case 1
+                Print "EPOLIN THERAPY    PRICE  "
+                Locate (y + 32) / 16, 41
+                Color IC
+                Print "A SERIES OF EPOLIN BASED DRUGS"
+                Locate (y + 48) / 16, 41
+                Print "HEALS CRITICAL INJURY STATUS"
+            Case 2
+                Print "NANDRYLN SHOT     PRICE  "
+                Locate (y + 32) / 16, 41
+                Color IC
+                Print "A DRUG DESIGNED TO INCREASE STRENGTH"
+                Locate (y + 48) / 16, 41
+                Print "INCREASES POWER BY 5"
+            Case 3
+                Print "ADRENALINE SHOT   PRICE          TEMP"
+                Locate (y + 32) / 16, 41
+                Color IC
+                Print "TEMPORARY STRENGTH BOOST "
+                Locate (y + 48) / 16, 41
+                Print "DOUBLES POWER FOR A LIMITED TIME"
+            Case 4
+                Print "RHQ73 SHOT        PRICE          TEMP"
+                Locate (y + 32) / 16, 41
+                Color IC
+                Print "PROVIDES RAPID HEALING"
+                Locate (y + 48) / 16, 41
+                Print "INCREASES HEALTH TO MAX"
+            Case 5
+                Print "RHQ73 SPRAY       PRICE          TEMP"
+                Locate (y + 32) / 16, 41
+                Color IC
+                Print "PROVIDES RAPID HEALING TO MANY PEOPLE"
+                Locate (y + 48) / 16, 41
+                Print "HEALS WHOLE PARTIES HEALTH TO MAX"
+        End Select
+
+        Color IC1
+        Locate (y + 16) / 16, 66
+        Print item(LOOPING + 1).c
+        Color 15
+
+        Line (X, y)-(X + 312, y + 48), 9, B
+        Line (X + 144, y)-(X + 144, y + 16), 9
+        Line (X + 200, y)-(X + 200, y + 16), 9
+        Line (X + 264, y)-(X + 264, y + 16), 9
+        Line (X, y + 16)-(X + 312, y + 16), 9
+
+        LOOPING = LOOPING + 1
+        y = y + 48
+    Loop Until LOOPING = looplimit
+    Return
+
+
+
+
+
+
+
+
+    drawrightcol3:
+    looplimit = 18
+    LOOPING = 0
+    X = 312
+    y = 80
+    Locate 6, 41
+    Print "SELLING PRICE"
+    Locate 6, 55
+    Print "PURCHASE PRICE"
+    Locate 6, 70
+    Print "NET GAIN"
+
+    xa = 0
+    Do
+        xa = xa + 1
+        dr = 0
+
+        If ally(xa).exist = 1 And ally(xa).death = 0 Then dr = 1
+        weoprice = ally(xa).price
+
+        If ally(xa).weapon <> "wushu             " Then
+            Locate 4 + (xa * 3), 44
+            If dr = 1 Then Print sellp(xa).sellprice
+
+            Locate 4 + (xa * 3), 59
+            If dr = 1 Then Print ally(xa).price
+
+            Locate 4 + (xa * 3), 72
+            If dr = 1 Then Print (sellp(xa).sellprice - weoprice)
+        Else
+            Locate 4 + (xa * 3), 44
+            Print Space$(35)
+        End If
+
+    Loop Until xa = 4
+
+    Do
+        Line (X, y)-(X + 312, y + 16), 9, B
+        Line (X + 116, y)-(X + 116, y + 16), 9
+        Line (X + 236, y)-(X + 236, y + 16), 9
+        LOOPING = LOOPING + 1
+        y = y + 16
+    Loop Until LOOPING = looplimit
+    Return
+
+
+
+
+
+    DRAWLEFTCOL1:
+    battleturno = 1
+    X = 15
+    y = 80
+    Do
+        looplimit = 2
+
+        dr = 0
+        Color 15
+        Locate (y + 16) / 16, 5
+        If ally(battleturno).exist = 1 Then dr = 1
+        If ally(battleturno).death = 1 Then Color 4
+
+        If lines = 0 Then
+            If dr = 1 Then
+                Print UCase$(ally(battleturno).names$)
+                Locate (y + 16) / 16, 24
+                Print "AP"
+                Locate (y + 16) / 16, 28
+                Print "A"
+                Locate (y + 16) / 16, 32
+                Print "R"
+            End If
+        End If
+        If ally(battleturno).death = 0 Then Color ally(battleturno).upg
+        LOOPING = 0
+
+        Do
+            If dr = 1 And LOOPING = 1 Then
+                If RCOL = 2 And vercol > 0 Then
+                    If UCase$(ally(battleturno).weapon) <> UCase$(shopupgrades(vercol - 6).forwep) Then Color 8
+                End If
+                Locate ((y + 16) / 16), 5
+                Print UCase$(ally(battleturno).weapon)
+                Locate (y + 16) / 16, 23
+                Print ally(battleturno).ATTACKP
+                Locate (y + 16) / 16, 27
+                Print ally(battleturno).acc
+                Locate (y + 16) / 16, 31
+                Print ally(battleturno).RANGE
+
+            End If
+            If lines = 0 Then
+                If LOOPING = 1 Then Line (X, y)-(X + 257, y), 0
+                Line (X, y - LOOPING)-(X + 257, y + 16 + LOOPING), 9, B
+            End If
+            Line (X + 161, y - LOOPING)-(X + 161, y + 16 + LOOPING), 9
+            Line (X + 193, y - LOOPING)-(X + 193, y + 16 + LOOPING), 9
+            Line (X + 225, y - LOOPING)-(X + 225, y + 16 + LOOPING), 9
+            y = y + 16
+            LOOPING = LOOPING + 1
+        Loop Until LOOPING = 2
+        Color 15
+
+        y = y + 16
+        battleturno = battleturno + 1
+    Loop Until y = 272
+    Return
+
+
+
+    DRAWleftCOL2:
+    Color 15
+    X = 15
+    y = 80
+    Do
+
+        dr = 0
+
+        If ally((y - 32) / 48).exist = 1 Then dr = 1
+        If ally((y - 32) / 48).death = 1 Then Color 4
+
+
+        If dr = 1 Then
+            If lines = 0 Then
+                Locate (y + 16) / 16, 27
+                Print "H"
+                Locate (y + 16) / 16, 32
+                Print "P"
+                Locate (y + 16) / 16, 4
+                Print UCase$(ally((y - 32) / 48).names)
+            End If
+            If ally((y - 32) / 48).h < ally((y - 32) / 48).mh Then
+                Color 12
+            Else
+                Color 15
+            End If
+            If ally((y - 32) / 48).death = 1 Then Color 4
+            Locate (y + 32) / 16, 25
+            Print ally((y - 32) / 48).h
+            If ally((y - 32) / 48).death = 0 Then Color 15
+            Locate (y + 32) / 16, 30
+            Print ally((y - 32) / 48).p
+        End If
+        Color 15
+        If lines = 0 Then
+            Line (X, y)-(X + 257, y + 15), 9, B
+        End If
+        Line (X + 177, y + 15)-(X + 257, y + 33), 9, B
+        Line (X + 177, y)-(X + 177, y + 16), 9
+        Line (X + 217, y)-(X + 217, y + 32), 9
+
+        y = y + 48
+    Loop Until y = 272
+    Return
+
+
+
+    messagetitlescroll:
+    Color 15
+    If lines = 0 Then
+        Locate 3, (40 - (Len(title$) / 2))
+        Print UCase$(title$)
+        Locate 25, 43
+        Print "WEAPONS"
+        Locate 25, 54
+        Print "UPGRADES"
+        Locate 25, 66
+        Print "SELL"
+        Locate 25, 74
+        Print "ITEMS"
+        Locate 19, 4
+        Print "ITEMS"
+    End If
+    Locate 20, 4
+    Print "RHQ73 SHOTS"
+    Locate 20, 24
+    Print state.rhq73i
+    Locate 21, 4
+    Print "RHQ73 SPRAY"
+    Locate 21, 24
+    Print state.rhq73s
+    Locate 22, 4
+    Print "ADRENALINE SHOTS"
+    Locate 22, 24
+    Print state.adrenaline
+    Locate 23, 4
+    Print "CASH"
+    Locate 23, 24
+    Print state.cash
+    If lines = 0 Then
+        Line (15, 288)-(272, 369), 9, B
+        Line (15, 303)-(272, 303), 9
+        Line (176, 303)-(176, 369), 9
+        Line (32, 32)-(608, 48), 9, B
+        Line (312, 384)-(624, 400), 9, B
+        Line (328, 384)-(328, 400), 9
+        Line (400, 384)-(400, 400), 9
+        Line (416, 384)-(416, 400), 9
+        Line (496, 384)-(496, 400), 9
+        Line (512, 384)-(512, 400), 9
+        Line (560, 384)-(560, 400), 9
+        Line (576, 384)-(576, 400), 9
+    End If
+    Return
+
+
+
+
+
+    TXTMODEWEP:
+    Color 15
+    If lines = 0 Then
+        Locate 6, 41
+        Print "WEAPON"
+        Locate 6, 63
+        Print "A"
+        Locate 6, 67
+        Print "AP"
+        Locate 6, 71
+        Print "R"
+        Locate 6, 74
+        Print "PRICE"
+    End If
+    y = 0
+    Do
+        y = y + 1
+
+        If shopweapons(y).price > state.cash Then Color 8
+
+        Locate 6 + y, 41
+        Print UCase$(shopweapons(y).names)
+        Locate 6 + y, 62
+        Print shopweapons(y).acc
+        Locate 6 + y, 66
+        Print shopweapons(y).ATTACKP
+        Locate 6 + y, 70
+        Print shopweapons(y).RANGE
+        Locate 6 + y, 73
+        Print shopweapons(y).price
+    Loop Until y = maxshowwep
+    Color 15
+    Return
+
+
+
+
+    TXTMODEUPG:
+    Color 15
+    If lines = 0 Then
+        Locate 6, 41
+        Print "UPGRADE FOR"
+        Locate 6, 63
+        Print "A"
+        Locate 6, 67
+        Print "AP"
+        Locate 6, 71
+        Print "R"
+        Locate 6, 74
+        Print "PRICE"
+    End If
+    y = 0
+
+    Do
+        Color 15
+        y = y + 1
+
+        Select Case acceptu(y).accupg
+            Case 0
+                Color 8
+            Case 1
+                Color shopupgrades(y).upg
+        End Select
+
+        If shopupgrades(y).price > state.cash Then
+            acceptu(y).accupg = 0
+            Color 8
+        End If
+
+        Locate 6 + y, 41
+        Print UCase$(shopupgrades(y).upgname)
+        Locate 6 + y, 62
+        Print shopupgrades(y).acc
+        Locate 6 + y, 66
+        Print shopupgrades(y).ATTACKP
+        Locate 6 + y, 70
+        Print shopupgrades(y).RANGE
+        Locate 6 + y, 73
+        Print shopupgrades(y).price
+    Loop Until y = maxshowupg
+    Color 15
+    Return
+
+
+    sell:
+    ally(((vercol - 6) / 3) + 1).weapon = "wushu"
+    ally(((vercol - 6) / 3) + 1).acc = Int(ally(((vercol - 6) / 3) + 1).p / 7.14)
+    If ally(((vercol - 6) / 3) + 1).acc > 10 Then ally(((vercol - 6) / 3) + 1).acc = 10
+    ally(((vercol - 6) / 3) + 1).ATTACKP = Int(ally(((vercol - 6) / 3) + 1).p / 1.875)
+    If ally(((vercol - 6) / 3) + 1).ATTACKP > 100 Then ally(((vercol - 6) / 3) + 1).ATTACKP = 100
+    ally(((vercol - 6) / 3) + 1).RANGE = Int(ally(((vercol - 6) / 3) + 1).p / 7.5)
+    If ally(((vercol - 6) / 3) + 1).RANGE > 20 Then ally(((vercol - 6) / 3) + 1).RANGE = 20
+    POWJUDGE = 15
+    If ally(((vercol - 6) / 3) + 1).ATTACKP >= 50 And ally(((vercol - 6) / 3) + 1).ATTACKP < 75 Then POWJUDGE = 7
+    If ally(((vercol - 6) / 3) + 1).ATTACKP >= 75 Then POWJUDGE = 14
+    ally(((vercol - 6) / 3) + 1).upg = POWJUDGE
+    state.cash = state.cash + sellp(((vercol - 6) / 3) + 1).sellprice
+    lines = 1
+    GoSub DRAWLEFTCOL1
+    GoSub drawrightcol3
+    GoSub messagetitlescroll
+    GoSub upgupdate
+    lines = 0
+    Return
+
+    buywep:
+    ally(((vercol1 - 6) / 3) + 1).upg = 15
+    ally(((vercol1 - 6) / 3) + 1).weapon = shopweapons(vercol - 6).names
+    ally(((vercol1 - 6) / 3) + 1).acc = shopweapons(vercol - 6).acc
+    ally(((vercol1 - 6) / 3) + 1).ATTACKP = shopweapons(vercol - 6).ATTACKP
+    ally(((vercol1 - 6) / 3) + 1).RANGE = shopweapons(vercol - 6).RANGE
+    state.cash = state.cash - shopweapons(vercol - 6).price
+    lines = 1
+    GoSub DRAWLEFTCOL1
+    txt = 1
+    GoSub drawrightcol1
+    GoSub messagetitlescroll
+    lines = 0
+    nomore = 1
+    GoSub upgupdate
+    Return
+
+    buyupg:
+    ally(((vercol1 - 6) / 3) + 1).ATTACKP = ally(((vercol1 - 6) / 3) + 1).ATTACKP + shopupgrades(vercol - 6).ATTACKP
+    ally(((vercol1 - 6) / 3) + 1).acc = ally(((vercol1 - 6) / 3) + 1).acc + shopupgrades(vercol - 6).acc
+    ally(((vercol1 - 6) / 3) + 1).upg = shopupgrades(vercol - 6).upg
+    ally(((vercol1 - 6) / 3) + 1).RANGE = ally(((vercol1 - 6) / 3) + 1).RANGE + shopupgrades(vercol - 6).RANGE
+    ally(((vercol1 - 6) / 3) + 1).price = ally(((vercol1 - 6) / 3) + 1).price + shopupgrades(vercol - 6).price
+    state.cash = state.cash - shopupgrades(vercol - 6).price
+    vercol = 0
+    lines = 1
+    GoSub DRAWLEFTCOL1
+    GoSub messagetitlescroll
+    GoSub upgupdate
+    txt = 2
+    GoSub drawrightcol1
+    lines = 0
+    nomore = 1
+    Return
+
+    buyitem:
+
+    If itsell = 1 Then
+        state.adrenaline = state.adrenaline + item(((vercol - 6) / 3) + 1).adrenaline
+        state.rhq73i = state.rhq73i + item(((vercol - 6) / 3) + 1).rhq73i
+        state.rhq73s = state.rhq73s + item(((vercol - 6) / 3) + 1).rhq73s
+        state.cash = state.cash - item(((vercol1 - 6) / 3) + 1).c
+    Else
+        Select Case ((vercol - 6) / 3) + 1
+            Case 1
+                If ally(((vercol1 - 6) / 3) + 1).death = 0 And ally(((vercol1 - 6) / 3) + 1).h < ally(((vercol1 - 6) / 3) + 1).mh Then
+                    ally(((vercol1 - 6) / 3) + 1).h = ally(((vercol1 - 6) / 3) + 1).h + 25
+                    If ally(((vercol1 - 6) / 3) + 1).h > ally(((vercol1 - 6) / 3) + 1).mh Then ally(((vercol1 - 6) / 3) + 1).h = ally(((vercol1 - 6) / 3) + 1).mh
+                Else
+                    Return
+                End If
+            Case 2
+                If ally(((vercol1 - 6) / 3) + 1).death = 1 Then
+                    ally(((vercol1 - 6) / 3) + 1).death = 0
+                Else
+                    Return
+                End If
+            Case 3
+                If ally(((vercol1 - 6) / 3) + 1).death = 0 Then
+                    ally(((vercol1 - 6) / 3) + 1).p = ally(((vercol1 - 6) / 3) + 1).p + 5
+                    ally(((vercol1 - 6) / 3) + 1).Mp = ally(((vercol1 - 6) / 3) + 1).Mp + 5
+                Else
+                    Return
+                End If
+        End Select
+        lines = 1
+        GoSub DRAWleftCOL2
+        If ally(((vercol1 - 6) / 3) + 1).death = 0 Then state.cash = state.cash - item(((vercol1 - 6) / 3) + 1).c
+    End If
+    lines = 1
+    GoSub messagetitlescroll
+    GoSub drawrightcol2
+    lines = 0
+    nomore = 1
+
+    Return
+
+    upgupdate:
+    y = 0
+    Do
+        y = y + 1
+        accept = 0
+        X = 0
+        Do
+            X = X + 1
+            If ally(X).exist Then
+                If UCase$(ally(X).weapon) = UCase$(shopupgrades(y).forwep) And ally(X).upg = 15 Then accept = 1
+                If accept = 1 Then Exit Do
+            End If
+        Loop Until X = 4
+        acceptu(y).accupg = accept
+    Loop Until y = maxshowupg
+    Return
+
+    selectsound:
+    'WHEN ENTER IS PRESSED
+    If sounds = 1 Then
+        freq = SFREQ
+        Do
+            Sound freq, slength
+            freq = freq / MULTIPLIER
+        Loop Until freq < MINFREQ
+    End If
+    Return
+
+    scrollsound:
+    'WHEN SPACE IS PRESSED
+    If sounds = 1 Then
+        freq = SFREQ
+        Do
+            Sound freq, slength
+            freq = freq * MULTIPLIER
+        Loop Until freq > maxfreq
+    End If
+    Return
+End Sub

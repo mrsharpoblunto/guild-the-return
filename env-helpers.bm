@@ -1,0 +1,124 @@
+Type SettingsType
+    sounds As Integer
+    getout As Integer
+End Type
+
+Type allystat
+    NAMES As String * 18
+    exist As Integer
+    acc As Integer
+    attackp As Integer
+    range As Integer
+    p As Integer
+    mp As Integer
+    h As Integer
+    mh As Integer
+    WEAPON As String * 18
+    death As Integer
+    DEFE As Integer 'used internally by the battle system only
+    upg As Integer 'color code used to show weapon upgrades
+    ad As Integer 'defensive status buffs
+    adcol As Integer 'color of the status buf
+    price As Integer 'unused, not sure what this is about
+End Type
+
+Type WeaponStat
+    NAME As String * 18
+    acc As Integer
+    attackp As Integer
+    range As Integer
+End Type
+
+Type GameState
+    GAMEPLACE As Integer
+    cash As Integer
+    adrenaline As Integer
+    rhq73i As Integer
+    rhq73s As Integer
+    currentWeapon As Integer
+    maxWeapons As Integer
+End Type
+
+Sub loadSettings (s As SettingsType)
+    settingsFile$ = getDataDir$ + "settings.gtr"
+    If _FileExists(settingsFile$) Then
+        Open settingsFile$ For Input As #1
+        Do While Not EOF(1)
+            Input #1, s.sounds, s.getout
+        Loop
+        Close #1
+    Else
+        s.sounds = 1
+        s.getout = 2
+    End If
+End Sub
+
+Sub saveSettings (s As SettingsType)
+    settingsFile$ = getDataDir$ + "settings.gtr"
+    Open getDataDir$ + "settings.gtr" For Output As #1
+    Write #1, s.sounds, s.getout
+    Close #1
+End Sub
+
+Function loadState (state As GameState, allyState() As allystat, weaponState() As WeaponStat)
+    If _FileExists(getDataDir$ + "save.gtr") Then
+        Open getDataDir$ + "save.gtr" For Input As #1
+        Do While Not EOF(1)
+            Input #1, state.GAMEPLACE, state.cash, state.rhq73i, state.rhq73s, state.adrenaline, state.currentWeapon, state.maxWeapons
+        Loop
+        Close #1
+        Open getDataDir$ + "save1.gtr" For Random As #1
+        For z = 1 To 4
+            Get 1, z, allyState(z)
+        Next
+        Close #1
+        Open getDataDir$ + "save2.gtr" For Random As #1
+        For z = 1 To 6
+            Get 1, z, weaponState(z)
+        Next
+        Close #1
+
+        loadState = 1
+    Else
+        loadState = 0
+    End If
+End Function
+
+Sub saveState (state As GameState, allyState() As allystat, weaponState() As WeaponStat)
+    Open getDataDir$ + "save.gtr" For Output As #1
+    Write #1, state.GAMEPLACE, state.cash, state.rhq73i, state.rhq73s, state.adrenaline, state.currentWeapon, state.maxWeapons
+    Close #1
+    Open getDataDir$ + "save1.gtr" For Random As #1
+    For z = 1 To 4
+        Put 1, z, allyState(z)
+    Next
+    Close #1
+    Open getDataDir$ + "save2.gtr" For Random As #1
+    For z = 1 To 6
+        Put 1, z, weaponState(z)
+    Next
+    Close #1
+End Sub
+
+
+Function getAppDir$ ()
+    If InStr(_OS$, "WINDOWS") Then
+        sep$ = "\"
+    Else
+        sep$ = "/"
+    End If
+    getAppDir$ = _CWD$ + sep$
+End Function
+
+Function getDataDir$ ()
+    If InStr(_OS$, "WINDOWS") Then
+        datadir$ = _Dir$("local data") + "\guild\"
+    Else
+        datadir$ = Environ$("HOME") + "/.guild/"
+    End If
+    If Not _DirExists(datadir$) Then
+        MkDir datadir$
+    End If
+    getDataDir$ = datadir$
+End Function
+

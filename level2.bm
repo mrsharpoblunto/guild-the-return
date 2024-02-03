@@ -1,0 +1,1090 @@
+Type particles
+    x As Integer
+    y As Integer
+    xv As Double
+    yv As Double
+    col As Integer
+End Type
+
+Type SCENERY
+    x As Integer
+    y As Integer
+    r As Integer
+    use As Integer
+    examine As Integer
+    usewith As Integer
+    pickup As Integer
+End Type
+
+Function level2
+    max = 500
+    Dim object(8) As SCENERY, bgefion(100), bgmask(100), gefion(100), gefmask(100), halfbox(24), BOX(48), blank(100), TXT1(896), txt2(1120), txt3(336), txt4(400), dot(max) As particles, smoke(1)
+
+    'communication center
+    object(1).x = 135
+    object(1).y = 73
+    object(1).r = 70
+    object(1).use = 0
+    object(1).examine = 1
+    object(1).usewith = 0
+    object(1).pickup = 0
+
+    'powerstation & prison closeup
+    object(2).x = 155
+    object(2).y = 333
+    object(2).r = 30
+    object(2).use = 0
+    object(2).examine = 1
+    object(2).usewith = 0
+    object(2).pickup = 0
+
+    'escape boat
+    object(3).x = 440
+    object(3).y = 278
+    object(3).r = 30
+    object(3).use = 0
+    object(3).examine = 1
+    object(3).usewith = 0
+    object(3).pickup = 0
+
+    'closeup of prison
+    object(4).x = 175
+    object(4).y = 200
+    object(4).r = 140
+    object(4).use = 0
+    object(4).examine = 1
+    object(4).usewith = 0
+    object(4).pickup = 0
+
+    'power station
+    object(5).x = 410
+    object(5).y = 300
+    object(5).r = 40
+    object(5).use = 1
+    object(5).examine = 0
+    object(5).usewith = 0
+    object(5).pickup = 0
+
+    'return to main island
+    object(6).x = 639
+    object(6).y = 1
+    object(6).r = 50
+    object(6).use = 0
+    object(6).examine = 1
+    object(6).usewith = 0
+    object(6).pickup = 0
+
+    'security computer
+    object(7).x = 545
+    object(7).y = 375
+    object(7).r = 50
+    object(7).use = 1
+    object(7).examine = 0
+    object(7).usewith = 0
+    object(7).pickup = 0
+
+    'return to prison & powerstation screen
+    object(8).x = 525
+    object(8).y = 150
+    object(8).r = 25
+    object(8).use = 0
+    object(8).examine = 1
+    object(8).usewith = 0
+    object(8).pickup = 0
+
+    location$ = "bayhare island"
+    pris = 2
+
+    Width 80, 60
+    Cls 0
+
+    Line (1, 1)-(11, 11), 4, BF
+    Get (1, 1)-(11, 11), gefion()
+    Get (1, 1)-(8, 7), BOX()
+    Get (1, 1)-(4, 7), halfbox()
+    Line (1, 1)-(11, 11), 1, BF
+    Get (1, 1)-(11, 11), bgefion()
+    Cls 0
+    Line (1, 1)-(11, 11), 0, BF
+    Get (1, 1)-(11, 11), blank()
+    Cls 0
+    Line (1, 1)-(1, 1), 8, BF
+    Get (1, 1)-(1, 1), smoke()
+    Cls 0
+
+    xg = 40
+    x = 430
+    y = 260
+    cursor = 1
+    neg = 1
+
+    currentScreen$ = "mainisland"
+    GoSub render
+
+    Do
+        a = 0
+        t = 2
+
+        If currentScreen$ = "prison" And pris = 1 Then
+            If y > 200 And y < 290 And neg = 1 And stopmove = 0 Then battle = 1
+            If y > 200 And y < 290 And stopmove > 0 And xg > 400 Then battle = 1
+
+            If battle = 1 Then
+                Put (xg, yg), bgefion(), PSet
+                Put (x, y), gefion(), PSet
+                Locate 55, 2
+                Color 9
+                Print "GUARD:HEY YOU! get the fuck out of here!"
+                Do: Loop While InKey$ = ""
+                Locate 56, 2
+                Color 15
+                Print "GEFION:Make me.    (press space to continue)"
+                Do: Loop Until InKey$ = Chr$(32)
+
+                Dim enemy(1 To 4) As enemystat
+                enemy(1).exist = 1
+                enemy(1).NAMES = "PRISON GUARD"
+                enemy(1).h = 100
+                enemy(1).mh = 100
+                enemy(1).p = 30
+                enemy(1).mp = 30
+                enemy(1).WEAPON = "9MM pistol"
+                enemy(1).range = 30
+                enemy(1).attackp = 25
+                enemy(1).acc = 7
+                enemy(1).death = 0
+                enemy(1).upg = 15
+
+                Dim context As BattleContext
+                context.batcash = 0
+                context.turndef = 0
+                context.aggressor = 50
+                context.healer = 25
+                context.brange = 20
+
+                result = doBattle(state, ally(), weapon(), enemy(), settings, context)
+                If result = 0 Then
+                    level2 = 0
+                    Exit Function
+                End If
+
+                GoSub render
+
+                pris = 0
+                Line (626, 456)-(629, 462), 4, BF
+                Put (631, 416 + (8 * cursor)), BOX(), Xor
+            End If
+
+            If pris = 1 Then
+                yg = 250
+                If stopmove = 0 Then xg = xg + (1 * neg)
+                If xg > 400 And stopmove = 0 Then stopmove = 100
+                If xg < 40 And stopmove = 0 Then stopmove = 100
+                Get (xg, yg)-(xg + 10, yg + 10), bgmask()
+
+                If stopmove > 0 Then
+                    stopmove = stopmove - 1
+                    If xg > 400 Then neg = -1
+                    If xg < 40 Then neg = 1
+                End If
+            End If
+        End If
+
+        Get (x, y)-(x + 10, y + 10), gefmask()
+
+        If currentScreen$ = "prison" and pris = 1 Then Put (xg, yg), bgefion(), PSet
+        Put (x, y), gefion(), PSet
+        Wait &H3DA, 8
+        _Limit 60
+        If currentScreen$ = "prison" and pris = 1 Then Put (xg, yg), bgmask(), PSet
+        Put (x, y), gefmask(), PSet
+ 
+        CHOR$ = InKey$
+
+        Select Case CHOR$
+
+            Case Chr$(32)
+                Put (631, 416 + (8 * cursor)), BOX(), Xor
+                cursor = cursor + 1
+                If cursor > 5 Then cursor = 1
+                Put (631, 416 + (8 * cursor)), BOX()
+
+            Case Chr$(13)
+                'goto prison & power
+                If examine = 1 And object = 2 And cursor = 4 Then
+                    ox = x
+                    oy = y
+                    x = 618
+                    y = 20
+                    currentScreen$ = "prisonisland"
+                    GoSub render
+                End If
+
+                'return to island
+                If examine = 1 And object = 6 And cursor = 4 Then
+                    x = ox
+                    y = oy
+                    currentScreen$ = "mainisland"
+                    GoSub render
+                End If
+
+                'goto prison
+                If examine = 1 And object = 4 And cursor = 4 Then
+                    If EXPLODE = 1 Then
+                        If pris = 2 Then pris = 1
+                        ox1 = x
+                        oy1 = y
+                        x = 525
+                        y = 151
+                        currentScreen$ = "prison"
+                        GoSub render
+                    Else
+                        Put (x, y), gefion(), PSet
+                        Color 15
+                        Locate 55, 2
+                        Print "You reach forward and touch the fence..."
+                        Locate 56, 2
+                        Print "GEFION:AHHH!! its electrified! I can't climb that."
+                        Do: Loop While InKey$ = ""
+                        Put (x, y), gefmask(), PSet
+
+                        Line (1, 424)-(499, 462), 0, BF
+                    End If
+                End If
+
+                'return to prison & power
+                If examine = 1 And object = 8 And cursor = 4 Then
+                    x = ox1
+                    y = oy1
+                    currentScreen$ = "prisonisland"
+                    GoSub render
+                End If
+
+                'power station  incident
+                If use = 1 And object = 5 And cursor = 1 And EXPLODE = 0 Then
+                    Put (x, y), gefion(), PSet
+                    GoSub POWERLEVER
+                    GoSub render
+
+                    If EXPLODE = 2 Then
+                        Do
+                            y = y - 2
+                            Get (x, y)-(x + 10, y + 10), gefmask()
+                            Put (x, y), gefion(), PSet
+                            Wait &H3DA, 8
+                            Put (x, y), gefmask(), PSet
+                        Loop Until y <= 234
+                        Put (x, y), gefion(), PSet
+                        GoSub EXPLODE
+                        Put (x, y), gefmask(), PSet
+                        object(5).use = 0
+                    End If
+                End If
+
+
+                'USE THE SECURITY COMPUTER
+                If use = 1 And object = 7 And cursor = 1 Then
+                    GoSub seccomp
+                    GoSub render
+                End If
+
+                If cursor = 5 then
+                    if igmenu = 0 Then
+                        level2 = 0
+                        Exit function
+                    End If
+                    GoSub render
+                End If
+
+                'ingame menu shortcut
+            Case Chr$(27)
+                if igmenu = 0 Then
+                    level2 = 0
+                    Exit Function
+                End If
+                GoSub render
+       End Select
+
+        ' movement
+       IF _KEYDOWN(CVI(CHR$(0) + "H")) OR _KEYDOWN(87) OR _KEYDOWN(119) Then
+            'UP
+            y = y - t
+            For z = 0 To 10
+                If Point(x + z, y) = n1 Or Point(x + z, y) = n2 Or Point(x + z, y) = n3 Then a = a + 1
+            Next
+            If a > 0 Then y = y + t
+        End If
+
+       IF _KEYDOWN(CVI(CHR$(0) + "P")) OR _KEYDOWN(83) OR _KEYDOWN(115) Then
+            'DOWN
+            y = y + t
+            For z = 0 To 10
+                If Point(x + z, y + 10) = n1 Or Point(x + z, y + 10) = n2 Or Point(x + z, y + 10) = n3 Then a = a + 1
+            Next
+            If a > 0 Then y = y - t
+        End If
+
+       IF _KEYDOWN(CVI(CHR$(0) + "K")) OR _KEYDOWN(65) OR _KEYDOWN(97) Then
+            'LEFT
+            x = x - t
+            For z = 0 To 10
+                If Point(x, y + z) = n1 Or Point(x, y + z) = n2 Or Point(x, y + z) = n3 Then a = a + 1
+            Next
+            If a > 0 Then x = x + t
+        End If
+
+       IF _KEYDOWN(CVI(CHR$(0) + "M")) OR _KEYDOWN(68) OR _KEYDOWN(100) Then
+            'RIGHT
+            x = x + t
+            For z = 0 To 10
+                If Point(x + 11, y + z) = n1 Or Point(x + 11, y + z) = n2 Or Point(x + 11, y + z) = n3 Then a = a + 1
+            Next
+            If a > 0 Then x = x - t
+        End If
+
+        'checks for object interactivity
+        For z = B To c
+            If Abs(Sqr((x - object(z).x) ^ 2 + (y - object(z).y) ^ 2)) <= object(z).r Then
+                use = object(z).use
+                examine = object(z).examine
+                usewith = object(z).usewith
+                pickup = object(z).pickup
+                object = z
+                Exit For
+            Else
+                use = 0
+                examine = 0
+                usewith = 0
+                pickup = 0
+                object = 0
+            End If
+        Next
+
+        If use = 1 Then
+            If Point(626, 424) = 0 Then Line (626, 424)-(629, 430), 4, BF
+        Else
+            Line (626, 424)-(629, 430), 0, BF
+        End If
+
+        If usewith = 1 Then
+            If Point(626, 432) = 0 Then Line (626, 432)-(629, 438), 4, BF
+        Else
+            Line (626, 432)-(629, 438), 0, BF
+        End If
+
+        If pickup = 1 Then
+            If Point(626, 440) = 0 Then Line (626, 440)-(629, 446), 4, BF
+        Else
+            Line (626, 440)-(629, 446), 0, BF
+        End If
+
+        If examine = 1 Then
+            If Point(626, 448) = 0 Then Line (626, 448)-(629, 454), 4, BF
+        Else
+            Line (626, 448)-(629, 454), 0, BF
+        End If
+    Loop
+    Level2 = 1
+    Exit Function
+
+    render:
+    WIDTH 80,60
+    cls 0
+
+    select case currentScreen$
+        case "mainisland":
+            GoSub mainisland
+        case "prisonisland":
+            GoSub prisonisland
+        case "prison":
+            GoSub prison
+    end select
+    GoSub textbox
+    Put (626, 456), halfbox()
+    Put (631, 416 + (8 * cursor)), BOX()
+    Return
+
+    textbox:
+    'text box
+    Color 15
+    Locate 52, 40 - CInt(Len(location$) / 2)
+    Print UCase$(location$)
+    Locate 54, 64
+    Print "USE\TALK"
+    Locate 55, 64
+    Print "USE WITH ITEM"
+    Locate 56, 64
+    Print "PICK UP"
+    Locate 57, 64
+    Print "EXAMINE\MOVE"
+    Locate 58, 64
+    Print "IN GAME MENU"
+    For a = 1 To 4
+        Line (500, 423 + (8 * a))-(640, 423 + (8 * a)), 9
+    Next
+    Line (500, 424)-(500, 463), 9
+    Line (630, 424)-(630, 463), 9
+    Line (625, 424)-(625, 463), 9
+    Line (0, 402)-(640, 402), 9
+    Line (0, 423)-(640, 423), 9
+    Line (0, 0)-(639, 463), 9, B
+    Line (1, 424)-(499, 462), 0, BF
+    Return
+
+
+
+    mainisland:
+    Line (0, 0)-(638, 401), 0, BF
+    Color 8
+    Locate 1, 1
+    Print
+    Print "ESCAPE BOAT"
+    Get (0, 8)-(96, 16), TXT1()
+    Print
+    Print "COMMUNICATION TOWER"
+    Get (0, 24)-(160, 32), txt2()
+    Print
+    Print "PRISON"
+    Get (0, 40)-(48, 48), txt3()
+
+    'draws island
+    Line (1, 1)-(638, 401), 0, BF
+    Line (1, 1)-(638, 401), 1, BF
+    Line (0, 0)-(639, 463), 9, B
+    Line (100, 8)-(150, 18), 2
+    Line (150, 18)-(220, 68), 2
+    Line (220, 68)-(230, 108), 2
+    Line (230, 108)-(290, 78), 2
+    Line (290, 78)-(310, 128), 2
+    Line (310, 128)-(390, 138), 2
+    Line (390, 138)-(440, 198), 2
+    Line (440, 198)-(440, 278), 2
+    Line (440, 278)-(260, 128), 2
+    Line (260, 128)-(249, 222), 2
+    Line (249, 222)-(203, 273), 2
+    Line (203, 273)-(157, 368), 2
+    Line (157, 368)-(150, 369), 2
+    Line (150, 369)-(80, 178), 2
+    Line (80, 178)-(40, 28), 2
+    Line (40, 28)-(100, 8), 2
+    Paint (110, 18), 2
+    Line (290, 178)-(340, 228), 2
+    Line (340, 228)-(340, 328), 2
+    Line (340, 328)-(260, 308), 2
+    Line (260, 308)-(290, 178), 2
+    Paint (310, 227), 2
+    Line (100, 38)-(170, 38), 8
+    Line (170, 38)-(170, 108), 8
+    Line (170, 108)-(100, 108), 8
+    Line (100, 108)-(100, 38), 8
+    Paint (101, 39), 8
+    Line (150, 328)-(160, 328), 8
+    Line (160, 328)-(160, 338), 8
+    Line (160, 338)-(150, 338), 8
+    Line (150, 338)-(150, 328), 8
+    Paint (151, 333), 8
+    Line (440, 278)-(445, 273), 8
+    Line (445, 273)-(455, 273), 8
+    Line (455, 273)-(455, 283), 8
+    Line (455, 283)-(445, 283), 8
+    Line (445, 283)-(440, 278), 8
+    Paint (445, 278), 8
+    B = 1
+    c = 3
+    n1 = 1
+    n2 = 8
+    'puts text on screen
+    Put (440, 288), TXT1()
+    Put (100, 112), txt2()
+    Put (151, 343), txt3()
+
+    Return
+
+
+
+    PRISONISLAND:
+    Line (0, 0)-(638, 401), 0, BF
+    Color 8
+    Locate 1, 1
+    Print
+    Print "PRISON COMPLEX"
+    Get (0, 8)-(112, 16), TXT1()
+    Print
+    Print "POWER GENERATOR"
+    Get (0, 24)-(120, 32), txt2()
+    Print
+    Print "BACK"
+    Get (0, 40)-(32, 48), txt3()
+
+    Line (0, 0)-(638, 401), 0, BF
+    Line (1, 1)-(638, 401), 2, BF
+    Line (0, 0)-(639, 463), 9, B
+
+    Line (100, 150)-(250, 250), 8, B
+    Line (101, 151)-(249, 249), 8, B
+    Line (110, 160)-(220, 160), 8
+    Line (220, 160)-(220, 190), 8
+    Line (220, 190)-(240, 190), 8
+    Line (240, 190)-(240, 240), 8
+    Line (240, 240)-(220, 240), 8
+    Line (220, 240)-(220, 210), 8
+    Line (220, 210)-(110, 210), 8
+    Line (110, 210)-(110, 160), 8
+    Paint (120, 170), 8
+    If EXPLODE <> 1 Then
+        Line (400, 300)-(420, 300), 8
+        Line (420, 300)-(420, 350), 8
+        Line (420, 350)-(400, 350), 8
+        Line (400, 350)-(400, 300), 8
+        Paint (410, 310), 8
+    End If
+
+    B = 4
+    c = 6
+    n1 = 9
+    n2 = 8
+    n3 = 6
+    'puts text on screen
+    Put (112, 254), TXT1()
+    If EXPLODE <> 1 Then Put (344, 360), txt2()
+    Put (600, 8), txt3()
+
+    Return
+
+
+
+
+    prison:
+    Line (0, 0)-(638, 401), 0, BF
+
+    Color 8
+    Locate 1, 1
+    Print
+    Print "CELLS 1,2 & 3"
+    Get (0, 8)-(104, 16), TXT1()
+    Print
+    Print "SECURITY COMPUTER"
+    Get (0, 24)-(136, 32), txt2()
+
+    Restore COMPSCREEN
+    For YA = 1 To 20
+        For XA = 1 To 20
+            Read z
+            PSet (XA, YA), z
+        Next
+    Next
+    Get (1, 1)-(20, 20), txt3()
+
+    Restore COMPKEYS
+    For YA = 1 To 4
+        For XA = 1 To 4
+            Read z
+            PSet (XA, YA), z
+        Next
+    Next
+    Get (1, 1)-(4, 4), txt4()
+
+    Line (0, 0)-(638, 401), 0, BF
+    Line (0, 0)-(640, 401), 2, BF
+    Line (0, 0)-(639, 463), 9, B
+
+    Line (20, 50)-(470, 50), 8
+    Line (470, 50)-(470, 150), 8
+    Line (470, 150)-(620, 150), 8
+    Line (620, 150)-(620, 400), 8
+    Line (620, 400)-(470, 400), 8
+    Line (470, 400)-(470, 300), 8
+    Line (470, 300)-(20, 300), 8
+    Line (20, 300)-(20, 50), 8
+    Line (470, 150)-(470, 200), 8
+    Line (470, 200)-(30, 200), 8
+    Line (30, 200)-(30, 290), 8
+    Line (30, 290)-(480, 290), 8
+    Line (480, 390)-(480, 390), 8
+    Line (480, 390)-(610, 390), 8
+    Line (610, 390)-(610, 160), 8
+    Line (610, 160)-(470, 160), 8
+
+    Paint (30, 60), 8
+    Line (471, 161)-(471, 201), 3
+    Line (471, 201)-(31, 201), 3
+    Line (31, 201)-(31, 289), 3
+    Line (31, 289)-(481, 289), 3
+    Line (481, 289)-(481, 389), 3
+    Line (481, 389)-(609, 389), 3
+    Line (609, 389)-(609, 161), 3
+    Line (609, 161)-(471, 161), 3
+    Paint (400, 280), 3
+    Line (520, 390)-(570, 390), 8
+    Line (570, 390)-(570, 360), 8
+    Line (570, 360)-(520, 360), 8
+    Line (520, 360)-(520, 390), 8
+    Paint (530, 380), 8
+    For YA = 1 To 4
+        For XA = 1 To 5
+            Put (516 + (5 * XA), 361 + (5 * YA)), txt4(), PSet
+        Next
+    Next
+    Put (546, 365), txt3(), PSet
+    Line (530, 290)-(610, 290), 8
+    Line (530, 300)-(610, 300), 8
+    Line (530, 290)-(530, 300), 8
+    Paint (550, 295), 8
+
+    x1 = 131
+    y1 = 201
+    Line (x1, y1)-(x1 + 40, y1), 6
+    Line (x1 + 40, y1)-(x1 + 40, y1 + 4), 6
+    Line (x1 + 40, y1 + 4)-(x1, y1 + 4), 6
+    Line (x1, y1 + 4)-(x1, y1), 6
+    Paint (x1 + 2, y1 + 2), 6
+    x1 = 231
+    y1 = 201
+    If ESCAPE = 1 Then
+        Line (x1, y1)-(x1, y1 + 40), 6
+        Line (x1, y1 + 40)-(x1 + 4, y1 + 40), 6
+        Line (x1 + 4, y1 + 40)-(x1 + 4, y1), 6
+        Line (x1 + 4, y1)-(x1, y1), 6
+        Paint (x1 + 1, y1 + 1), 6
+    Else
+        Line (x1, y1)-(x1 + 40, y1), 6
+        Line (x1 + 40, y1)-(x1 + 40, y1 + 4), 6
+        Line (x1 + 40, y1 + 4)-(x1, y1 + 4), 6
+        Line (x1, y1 + 4)-(x1, y1), 6
+        Paint (x1 + 2, y1 + 2), 6
+    End If
+    x1 = 331
+    y1 = 201
+    Line (x1, y1)-(x1 + 40, y1), 6
+    Line (x1 + 40, y1)-(x1 + 40, y1 + 4), 6
+    Line (x1 + 40, y1 + 4)-(x1, y1 + 4), 6
+    Line (x1, y1 + 4)-(x1, y1), 6
+    Paint (x1 + 2, y1 + 2), 6
+    x1 = 500
+    y1 = 99
+    Line (x1, y1)-(x1, y1 + 50), 6
+    Line (x1, y1 + 50)-(x1 + 4, y1 + 50), 6
+    Line (x1 + 4, y1 + 50)-(x1 + 4, y1), 6
+    Line (x1 + 4, y1)-(x1, y1), 6
+    Paint (x1 + 1, y1 + 1), 6
+    Line (x1, y1 + 51)-(x1 + 50, y1 + 51), 3
+    Line (x1 + 50, y1 + 50)-(x1 + 50, y1 + 61), 3
+    Line (x1 + 50, y1 + 61)-(x1, y1 + 61), 3
+    Line (x1, y1 + 61)-(x1, y1 + 51), 3
+    Paint (x1 + 5, y1 + 55), 3
+
+    Put (200, 190), TXT1()
+    Put (480, 392), txt2()
+
+    COMPKEYS:
+    Data 00,00,00,00
+    Data 00,08,08,00
+    Data 00,08,08,00
+    Data 00,00,00,00
+
+    COMPSCREEN:
+    Data 09,09,09,09,09,09,09,09,09,09,09,09,09,09,09,09,09,09,09,09
+    Data 09,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,09
+    Data 09,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,09
+    Data 09,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,09
+    Data 09,00,09,09,09,09,09,09,09,09,09,09,09,09,09,09,09,09,00,09
+    Data 09,00,09,00,00,00,00,00,00,00,00,00,00,00,00,00,00,09,00,09
+    Data 09,00,09,00,09,09,09,09,00,00,00,00,00,00,00,00,00,09,00,09
+    Data 09,00,09,00,09,00,00,09,00,00,00,00,00,00,00,00,00,09,00,09
+    Data 09,00,09,00,09,00,00,09,09,09,09,09,09,09,09,00,00,09,00,09
+    Data 09,00,09,00,09,09,09,09,00,00,00,00,00,00,09,00,00,09,00,09
+    Data 09,00,09,00,00,00,00,00,00,00,00,00,00,00,09,00,00,09,00,09
+    Data 09,00,09,00,00,00,00,00,00,00,00,00,00,00,09,00,00,09,00,09
+    Data 09,00,09,00,00,00,00,00,00,00,00,00,00,00,09,00,00,09,00,09
+    Data 09,00,09,00,00,00,00,00,00,00,00,00,00,00,09,00,00,09,00,09
+    Data 09,00,09,00,00,00,00,00,00,00,00,00,00,00,09,00,00,09,00,09
+    Data 09,00,09,09,09,09,09,09,09,09,09,00,09,09,09,09,00,09,00,09
+    Data 09,00,00,00,00,00,00,00,00,00,09,00,00,00,00,00,00,09,00,09
+    Data 09,00,04,04,04,04,04,04,04,00,09,00,09,09,09,09,00,09,00,09
+    Data 09,00,00,00,00,00,00,00,00,00,09,00,00,00,00,00,00,09,00,09
+    Data 09,09,09,09,09,09,09,09,09,09,09,09,09,09,09,09,09,09,09,09
+
+    B = 7
+    c = 8
+    n1 = 8
+    n2 = 2
+    n3 = 6
+    Return
+
+
+
+
+
+
+    POWERLEVER:
+
+    Locate 55, 2
+    Color 15
+    Print "You walk into a small room containing a friction generator"
+    Locate 56, 2
+    Print "there is a switch next to the cooling tank that says main"
+    Locate 57, 2
+    Print "valve control."
+    Do: Loop While InKey$ = ""
+    Line (1, 424)-(499, 462), 0, BF
+
+    Line (1, 1)-(638, 401), 0, BF
+    Line (1, 1)-(41, 20), 15, BF
+    Get (1, 1)-(41, 20), txt2()
+    Line (1, 1)-(638, 401), 0, BF
+    Line (1, 1)-(638, 401), 8, BF
+    Line (0, 0)-(639, 463), 9, B
+
+
+    Line (300, 100)-(340, 300), 1, BF
+    Line (300, 200)-(340, 300), 4, BF
+    Line (300, 100)-(340, 300), 15, B
+    Line (300, 200)-(340, 200), 15
+    Line (340, 200)-(340, 300), 15
+    Line (340, 300)-(300, 300), 15
+    Line (300, 300)-(300, 200), 15
+    Line (340, 100)-(382, 100), 15
+    Line (382, 100)-(382, 300), 15
+    Line (382, 300)-(340, 300), 15
+    Line (50, 100)-(250, 300), 0, BF
+    Line (50, 100)-(250, 300), 15, B
+
+    Color 15
+    Locate 14, 8
+    Print "CORE TEMPERATURE:"
+    Locate 14, 30
+    Print Chr$(248); "C"
+    Locate 15, 8
+    Print "POWER OUTPUT:"
+    Locate 15, 27
+    Print "%"
+
+    If y1 <> 190 And y1 > 0 Then
+    Else
+        y1 = 190
+    End If
+
+    Do
+        Put (341, y1), txt2()
+        Wait &H3DA, 8
+        _Limit 60
+        Put (341, y1), txt2(), Xor
+
+        CHOR$ = InKey$
+
+        Select Case CHOR$
+
+            Case Chr$(27)
+                If y1 > 250 Then
+                    Locate 55, 2
+                    Color 15
+                    Put (341, y1), txt2()
+                    Print "GEFION:Oh shit this things gonna blow!!"
+                    Do: Loop While InKey$ = ""
+                    Line (1, 424)-(499, 462), 0, BF
+                    EXPLODE = 2
+                End If
+
+                Return
+        End Select
+
+        IF _KEYDOWN(CVI(CHR$(0) + "H")) OR _KEYDOWN(87) OR _KEYDOWN(119) Then
+            'UP
+            y1 = y1 - 1
+            If y1 < 101 Then y1 = 101
+        End If
+
+        IF _KEYDOWN(CVI(CHR$(0) + "P")) OR _KEYDOWN(83) OR _KEYDOWN(115) Then
+            'DOWN
+            y1 = y1 + 1
+            If y1 > 280 Then y1 = 280
+        End If
+
+        Locate 14, 25
+        Print (-64 + y1)
+
+        Locate 15, 22
+        Print (y1 - 100)
+
+        If y1 > 250 Then
+            I = I + 1
+            If I > 100 Then I = 1
+            Locate 16, 8
+            If I < 50 Then
+                Color 4
+                Print "WARNING"
+
+                Color 15
+            Else
+                Print "       "
+            End If
+        Else
+            Color 2
+            Locate 16, 8
+            Print "NORMAL "
+            Color 15
+        End If
+    Loop
+    Return
+
+
+
+
+    EXPLODE:
+    d = 0
+    remove = 2
+    d = 0
+    Do
+        d = d + 1
+        dot(d).x = 410
+        dot(d).y = 325
+        Randomize Timer
+        xneg = Int(Rnd * 2) + 1
+        If xneg = 1 Then xneg = -1
+        If xneg = 2 Then xneg = 1
+        Randomize Timer
+        yneg = Int(Rnd * 2) + 1
+        If yneg = 1 Then yneg = -1
+        If yneg = 2 Then yneg = 1
+        Randomize Timer
+        dot(d).xv = (Rnd * 20) * xneg
+        Randomize Timer
+        dot(d).yv = (Rnd * 20) * yneg
+        Randomize Timer
+        col = Int(Rnd * 2) + 1
+        If col = 1 Then dot(d).col = 4
+        If col = 2 Then dot(d).col = 14
+    Loop Until d = max
+
+    d = 0
+    Do
+        d = d + 1
+        For a = 1 To max
+            If Sqr((dot(a).x - 410) ^ 2 + (dot(a).y - 325) ^ 2) > 50 Then
+                dot(a).x = dot(a).x - dot(a).xv
+                dot(a).y = dot(a).y - dot(a).yv
+                Line (dot(a).x, dot(a).y)-(410, 325), dot(a).col
+            Else
+                Line (dot(a).x, dot(a).y)-(410, 325), dot(a).col
+            End If
+            If a Mod 10 = 0 Then
+                _Delay 0.001
+            End If
+        Next
+
+        For a = 1 To max
+            Line (dot(a).x, dot(a).y)-(410, 325), remove
+        Next
+
+        For a = 1 To max
+            If d = 4 Then
+                dot(a).xv = dot(a).xv * -.5
+                dot(a).yv = dot(a).yv * -.5
+            End If
+            If d = 6 Then remove = 6
+            dot(a).x = dot(a).x + dot(a).xv
+            dot(a).y = dot(a).y + dot(a).yv
+            If dot(a).x = 410 Then dot(a).xv = 0
+            If dot(a).y = 325 Then dot(a).yv = 0
+        Next
+
+    Loop Until d = 8
+    d = 0
+    Do
+        d = d + 1
+        Randomize Timer
+        dot(d).x = 400 + Int(Rnd * 20)
+        Randomize Timer
+        dot(d).y = 315 + Int(Rnd * 20)
+        Randomize Timer
+        dot(d).xv = (Rnd * 2) + 1
+        Randomize Timer
+        dot(d).yv = ((Rnd * 2) + 1) * -1
+        dot(d).col = 25
+    Loop Until d = max
+
+    m = 0
+    f = 0
+    Do
+        m = m + 20
+        If m >= max Then m = max
+
+        For p = f To m
+            dot(p).col = dot(p).col - 1
+            dot(p).xv = dot(p).xv * 1.05
+            dot(p).yv = dot(p).yv * 1.05
+            dot(p).x = dot(p).x + dot(p).xv
+            dot(p).y = dot(p).y + dot(p).yv
+            If dot(p).x > 639 Then dot(p).col = 0
+            If dot(p).y < 1 Then dot(p).col = 0
+
+            If dot(p).col <= 0 Then
+                Randomize Timer
+                dot(p).x = 400 + Int(Rnd * 20)
+                Randomize Timer
+                dot(p).y = 315 + Int(Rnd * 20)
+                Randomize Timer
+                dot(p).xv = (Rnd * 2) + 1
+                Randomize Timer
+                dot(p).yv = ((Rnd * 2) + 1) * -1
+                Randomize Timer
+                dot(p).col = 25
+                f = f + 1
+                If f >= max Then Exit For
+            End If
+
+        Next
+
+        For p = f To m
+            Put (dot(p).x, dot(p).y), smoke()
+        Next
+
+        _Delay 0.03
+
+        For p = f To m
+            Put (dot(p).x, dot(p).y), smoke(), Xor
+        Next
+
+        If f >= max Then Exit Do
+
+    Loop
+    Line (344, 360)-(464, 368), 2, BF
+    EXPLODE = 1
+    Return
+
+
+    seccomp:
+    Color 15
+    cell = 1
+    Line (1, 1)-(638, 401), 0, BF
+    Line (0, 0)-(639, 463), 9, B
+    Locate 37, 24
+    Print "CELL 2"
+    Locate 37, 43
+    Print "CELL 3"
+    Locate 37, 6
+    Print "CELL 1"
+    Line (20, 287)-(460, 307), 9, B
+    Line (20, 295)-(460, 295), 9
+    Line (460, 287)-(460, 306), 9
+    Line (32, 295)-(32, 306), 9
+    Line (166, 287)-(166, 306), 9
+    Line (178, 295)-(178, 306), 9
+    Line (312, 287)-(312, 306), 9
+    Line (324, 295)-(324, 306), 9
+    Line (30, 30)-(166, 160), 8, B
+    Line (176, 30)-(313, 160), 8, B
+    Line (322, 30)-(460, 160), 8, B
+    Line (20, 20)-(470, 20), 8
+    Line (470, 20)-(470, 120), 8
+    Line (470, 120)-(620, 120), 8
+    Line (620, 120)-(620, 370), 8
+    Line (620, 370)-(470, 370), 8
+    Line (470, 370)-(470, 270), 8
+    Line (470, 270)-(20, 270), 8
+    Line (20, 270)-(20, 20), 8
+    Line (470, 120)-(470, 170), 8
+    Line (470, 170)-(30, 170), 8
+    Line (30, 170)-(30, 260), 8
+    Line (30, 260)-(480, 260), 8
+    Line (480, 260)-(480, 360), 8
+    Line (480, 360)-(610, 360), 8
+    Line (610, 360)-(610, 130), 8
+    Line (610, 130)-(470, 130), 8
+    Line (470, 120)-(470, 120), 0
+    Line (530, 260)-(610, 260), 8
+    Line (530, 270)-(610, 270), 8
+    Line (530, 270)-(530, 270), 8
+    Line (610, 260)-(610, 270), 0
+    Line (470, 120)-(470, 130), 0
+    Line (530, 260)-(530, 270), 8
+    Put (180, 40), gefion()
+    Put (250, 40), gefion()
+    Put (295, 40), gefion()
+    Put (180, 100), gefion()
+    Put (180, 120), gefion()
+    Put (295, 110), gefion()
+    Put (295, 70), gefion()
+    Put (540, 300), gefion()
+    ysc = 296
+    xsc = 21 + (146 * (cell - 1))
+    Put (xsc, ysc), gefion()
+    Locate 38, 24
+    If CELOCK2 = 0 Then Print "LOCKED  "
+    If CELOCK2 = 1 Then Print "UNLOCKED"
+    Locate 38, 43
+    If CELOCK3 = 0 Then Print "LOCKED  "
+    If CELOCK3 = 1 Then Print "UNLOCKED"
+    Locate 38, 6
+    If CELOCK1 = 0 Then Print "LOCKED  "
+    If CELOCK1 = 1 Then Print "UNLOCKED"
+
+    Do
+        If pris = 1 Then
+            yg = 220
+            Line (xg, yg)-(xg + 10, yg + 10), 0, BF
+            If stopmove = 0 Then xg = xg + (1 * neg)
+            If xg > 400 And stopmove = 0 Then stopmove = 100
+            If xg < 40 And stopmove = 0 Then stopmove = 100
+
+            If stopmove > 0 Then
+                stopmove = stopmove - 1
+                If xg > 400 Then neg = -1
+                If xg < 40 Then neg = 1
+            End If
+
+            Put (xg, yg), gefion(), PSet
+            Wait &H3DA, 8
+            _Limit 60
+        End If
+
+        CHOR$ = InKey$
+
+        Select Case CHOR$
+
+            Case Chr$(13)
+                If cell = 1 Then
+                    CELOCK1 = CELOCK1 + 1
+                    If CELOCK1 > 1 Then CELOCK1 = 0
+                End If
+                If cell = 2 Then
+                    CELOCK2 = CELOCK2 + 1
+                    If CELOCK2 > 1 Then CELOCK2 = 0
+                End If
+                If cell = 3 Then
+                    CELOCK3 = CELOCK3 + 1
+                    If CELOCK3 > 1 Then CELOCK3 = 0
+                End If
+                Locate 38, 24
+                If CELOCK2 = 0 Then Print "LOCKED  "
+                If CELOCK2 = 1 Then Print "UNLOCKED"
+                Locate 38, 43
+                If CELOCK3 = 0 Then Print "LOCKED  "
+                If CELOCK3 = 1 Then Print "UNLOCKED"
+                Locate 38, 6
+                If CELOCK1 = 0 Then Print "LOCKED  "
+                If CELOCK1 = 1 Then Print "UNLOCKED"
+
+            Case Chr$(32)
+                Put (xsc, ysc), gefion(), Xor
+                cell = cell + 1
+                If cell > 3 Then cell = 1
+                ysc = 296
+                xsc = 21 + (146 * (cell - 1))
+                Put (xsc, ysc), gefion()
+
+
+            Case Chr$(27)
+                If CELOCK2 = 1 And ESCAPE = 0 Then
+                    pris = 0
+                    ESCAPE = 1
+                End If
+                Return
+
+        End Select
+
+    Loop
+    Return
+end sub
+
+

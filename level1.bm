@@ -1,0 +1,1324 @@
+Function level1
+    Dim gefion%(1 To 200), box%(1 To 4700)
+    Dim door1%(1 To 8690)
+    Dim item(6) As item, shopupgrades(17) As shopupgrad, shopweapons(17) As shopwep
+    Dim enemy(1 To 4) As enemystat
+
+    'IS STRUCTURED AS FOLLOWS
+    '
+    '
+    '----------------------------------->MAIN MAP
+    '|                                      |
+    '|                                      DO
+    '|                                      |
+    '|       ---------------------------------------------------------------
+    '|       |             |            |            |         |           |
+    '|    SHOP        TALK 2 PILOT  RIKARI'S      PICK      BATTLE       DORM
+    '|       |             |         OFFICE       WEAPON   CALL BATTLE    ROOM
+    '|       |             |            |            |         |           |
+    '-----------------------------------------------------------           |
+    '|                                                                     |
+    '|                                     ---------------------------------
+    '|                                     |             |                 |
+    '|                                 LOOK AROUND    PLAY CARDS        SLEEP
+    '|                                     |              |            EXIT DO
+    '------------------------------------------------------           CALL SAVE
+    '                                                                      |
+    '                                   LOOP                               |
+    '                                                                      |
+    '                                 EXIT SUB <----------------------------
+    '
+    '
+    Cls 0
+    Line (10, 10)-(20, 20), 7, BF
+    Get (10, 10)-(20, 20), gefion%()
+    Let x1% = 290
+    Let y1% = 215
+    Line (x1%, y1%)-(x1%, y1% + 50), 5
+    Line (x1%, y1% + 50)-(x1% + 4, y1% + 50), 5
+    Line (x1% + 4, y1% + 50)-(x1% + 4, y1%), 5
+    Line (x1% + 4, y1%)-(x1%, y1%), 5
+    Paint (x1% + 1, y1% + 1), 5
+    Get (x1%, y1%)-(x1% + 4, y1% + 50), door1%()
+    Let x1% = 345
+    Let Y% = 370
+    Line (x1%, y1%)-(x1% + 40, y1%), 5
+    Line (x1% + 40, y1%)-(x1% + 40, y1% + 4), 5
+    Line (x1% + 40, y1% + 4)-(x1%, y1% + 4), 5
+    Line (x1%, y1% + 4)-(x1%, y1%), 5
+    Paint (x1% + 1, y1% + 1), 5
+    Get (x1%, y1%)-(x1% + 40, y1% + 4), box%()
+    Cls 0
+
+    cursor = 1
+    converse = 0
+    converse1 = 0
+    converse2 = 0
+
+    Do
+        exitloop = 0
+        Cls 0
+        Draw "bu180 bl 202"
+        Draw R$
+        Draw e$
+        Draw n$
+        Draw O$
+        Draw B$
+        Draw U$
+        Draw "br45"
+        Draw h$
+        Draw Q$
+        Draw "bl203 bd50 bl202"
+        Draw e$
+        Draw A$
+        Draw s$
+        Draw t$
+        Draw "br45"
+        Draw w$
+        Draw i$
+        Draw n$
+        Draw g$
+        Draw "bl203"
+        Line (0, 125)-(640, 125), 8
+        Paint (10, 130), 8
+        Line (0, 180)-(290, 180), 3
+        Line (290, 180)-(290, 305), 3
+        Line (290, 305)-(0, 305), 3
+        Line (0, 305)-(0, 355), 3
+        Line (0, 355)-(295, 355), 3
+        Line (295, 355)-(295, 480), 3
+        Line (295, 480)-(345, 480), 3
+        Line (345, 480)-(345, 355), 3
+        Line (345, 355)-(640, 355), 3
+        Line (640, 355)-(640, 305), 3
+        Line (640, 305)-(345, 305), 3
+        Line (345, 305)-(345, 125), 3
+        Line (0, 180)-(0, 305), 3
+        Line (50, 180)-(50, 305), 3
+        Line (345, 125)-(0, 125), 3
+        Paint (45, 185), 3
+        Line (0, 125)-(0, 180), 3
+        Paint (10, 131), 3
+        Line (50, 125)-(500, 125), 8
+        Line (0, 125)-(0, 305), 8
+        Line (50, 126)-(500, 126), 8
+        Line (1, 125)-(1, 305), 8
+        Locate 10, 7
+        Print "shop"
+        Locate 21, 7
+        Print "heli pad"
+        Locate 21, 63
+        Print "weapons lab"
+        Locate 26, 2
+        Print "dorm room 6"
+        Locate 26, 46
+        Print "Battle training"
+        Locate 15, 10
+        Print "Admiral Rikari's office"
+
+        Do
+
+            GoSub cauculate3
+
+            If GO = 1 Then
+                GO = 0
+                Exit Do
+            End If
+
+            Select Case cursor
+
+                Case 1
+                    shopweapons(1).names = "ZEUS CANNON"
+                    shopweapons(1).ATTACKP = 90
+                    shopweapons(1).RANGE = 50
+                    shopweapons(1).acc = 8
+                    shopweapons(1).price = 180
+                    maxshowwep = 1
+
+                    shopupgrades(1).upgname = "SHOTGUN MAG"
+                    shopupgrades(1).forwep = "AUTO SHOTGUN"
+                    shopupgrades(1).ATTACKP = 5
+                    shopupgrades(1).RANGE = 0
+                    shopupgrades(1).acc = 0
+                    shopupgrades(1).price = 50
+                    shopupgrades(1).upg = 7
+
+                    shopupgrades(2).upgname = "RAIL SIGHT"
+                    shopupgrades(2).forwep = "RAIL PISTOL"
+                    shopupgrades(2).ATTACKP = 0
+                    shopupgrades(2).RANGE = 0
+                    shopupgrades(2).acc = 1
+                    shopupgrades(2).price = 50
+                    shopupgrades(2).upg = 7
+
+                    shopupgrades(3).upgname = "LASER COOLANT"
+                    shopupgrades(3).forwep = "COMBAT LASER"
+                    shopupgrades(3).ATTACKP = 5
+                    shopupgrades(3).RANGE = 0
+                    shopupgrades(3).acc = 0
+                    shopupgrades(3).price = 50
+                    shopupgrades(3).upg = 7
+
+                    maxshowupg = 3
+
+                    X = 0
+                    Do
+                        X = X + 1
+                        item(X).c = 150
+                    Loop Until X = 6
+                    item(4).adrenaline = 1
+                    item(5).rhq73i = 1
+                    item(6).rhq73s = 1
+
+                    shop state, ally(), "Renobu store", item(), shopupgrades(), maxshowupg, shopweapons(), maxshowwep
+                    exitloop = 1
+
+                Case 2
+                    exitloops = 0
+                    Cls 0
+                    Draw "bu180 bl 202"
+                    Draw R$
+                    Draw e$
+                    Draw n$
+                    Draw O$
+                    Draw B$
+                    Draw U$
+                    Draw "br45"
+                    Draw h$
+                    Draw Q$
+                    Draw "bl203 bd50 bl202"
+                    Draw e$
+                    Draw A$
+                    Draw s$
+                    Draw t$
+                    Draw "br45"
+                    Draw w$
+                    Draw i$
+                    Draw n$
+                    Draw g$
+                    Draw "bl203"
+                    View Print 10 To 30
+                    Print "you walk out into a large indoor helipad, there is a large glass roof which is"
+                    Print "closed ,rain is drizzling onto it blurring the neon lights of Tienke"
+                    Print "which stretch to the low lying clouds overhead. The wind whips over the roof"
+                    Print "creating a low hum. In the center is a large VTOL aircraft , with its engines"
+                    Print "idling emitting a quiet dull rumble.leaning on the aircraft is a man, by the"
+                    Print "looks of it a pilot."
+                    Do
+                    Loop While InKey$ = ""
+                    Print
+                    Print "GEFION:Not good flying weather huh?"
+                    Do
+                    Loop While InKey$ = ""
+                    Print
+                    Print "PILOT:Nah I had a bit of a time trying to get her down a few minutes ago"
+                    Print "despite the Auto stabilizers they should keep her steady in around 120kmph"
+                    Print "winds but I was gettin thrown around a fair bit."
+                    Do
+                    Loop While InKey$ = ""
+                    Do
+                        Print
+                        If converse >= 2 Or converse <= 0 Then Print "1)Nice bird there"
+                        If converse1 >= 3 Or converse1 <= 1 Then Print "2)So are you the renobu-6 pilot?"
+                        If converse2 >= 4 Or converse2 <= 2 Then Print "3)Hi I'm Gefion I'm in the Renobu-6 commando team."
+                        Print "4)Well I better  go"
+
+                        Do
+                            CHOR$ = InKey$
+                            If CHOR$ = Chr$(49) And converse = 0 Then
+                                Print
+                                Print "PILOT:Yeah shes a beauty all right. The latest attack/transport around, the"
+                                Print "AT-28L Narwall. We mainly use it to ferry around the renobu guys I mean it"
+                                Print "does go mach 3 even with 20 odd people on board plus an assult buggy but"
+                                Print "sometimes I get to show off what she can do. You remember a few months back"
+                                Print "when that Rebel train blew up and they said it was from reactor failure well..."
+                                Print "Lets just say the rail cannon had a bit of a workout that day. He He"
+                                Do
+                                Loop While InKey$ = ""
+                                Print
+                                Print "GEFION:NADI said it was a freight train"
+                                Do
+                                Loop While InKey$ = ""
+                                Print
+                                Print "PILOT:Yeah well dont beleive everything you see on the news kid."
+                                Do
+                                Loop While InKey$ = ""
+                                Let converse = 1
+                                Exit Do
+                            End If
+
+                            If CHOR$ = Chr$(50) And converse1 = 0 Then
+                                Print
+                                Print "PILOT:yep thats me. Renobu doesn't do many op's where I get much action"
+                                Print "anymore, were mainly just taxi drivers now but the salary makes it worth"
+                                Print "it, and the gear! (pats the VTOL)"
+                                Let converse1 = 2
+                                Exit Do
+                            End If
+
+                            If CHOR$ = Chr$(51) And converse2 = 0 Then
+                                Print
+                                Print "PILOT:New guy huh? Where you from?"
+                                Do: Loop While InKey$ = ""
+                                Print
+                                Print "GEFION: Nadgier"
+                                Do: Loop While InKey$ = ""
+                                Print
+                                Print "PILOT: Up North eh, Well I'm a native to Tienke. John Nagashi"
+                                Do: Loop While InKey$ = ""
+                                Print
+                                Print "GEFION: Gefion Freelander"
+                                Do: Loop While InKey$ = ""
+                                Print
+                                Print "PILOT:So what are you doing here GEFFY?"
+                                Do: Loop While InKey$ = ""
+                                Print
+                                Print "GEFION:Well I'm here as a commando or as you put it a taxi passenger"
+                                Print "specialising in infiltration and stealth ops behind enemy lines"
+                                Do: Loop While InKey$ = ""
+                                Print
+                                Print "PILOT:Well you'll have your chance, the rebels have been pretty active"
+                                Print "lately. And frankly the gear they've got now aint to shabby. Trust me"
+                                Print "i'm happy to be above the battlefeild nowadays. Not like the old days"
+                                Print "where they were a bunch of thugs with guns, now theyve got mechs,"
+                                Print "tanks, the works and most of them are battle hardened soldiers trained"
+                                Print "by either us before they desert NADI or by other deserters."
+                                Let converse2 = 3
+                                Exit Do
+                            End If
+
+                            If CHOR$ = Chr$(52) Then
+                                exitloops = 1
+                                exitloop = 1
+                                Exit Do
+                            End If
+
+                        Loop
+                    Loop Until exitloops = 1
+
+                Case 3
+                    exitloops = 0
+                    Cls 0
+                    Draw "bu180 bl 202"
+                    Draw R$
+                    Draw e$
+                    Draw n$
+                    Draw O$
+                    Draw B$
+                    Draw U$
+                    Draw "br45"
+                    Draw h$
+                    Draw Q$
+                    Draw "bl203 bd50 bl202"
+                    Draw e$
+                    Draw A$
+                    Draw s$
+                    Draw t$
+                    Draw "br45"
+                    Draw w$
+                    Draw i$
+                    Draw n$
+                    Draw g$
+                    Draw "bl203"
+                    View Print 10 To 30
+                    Print "You walk into a fairly large room, Inside are 6 bunks some furniture and an "
+                    Print "old T.V .Sitting around one of the tables are 4 guys including Kay'l, they"
+                    Print "appear to be playing cards.You throw down your bag of stuff and walk over"
+                    Print "to them."
+                    Do
+                    Loop While InKey$ = ""
+                    Print
+                    Print "GEFION:Hey guys "
+                    Do
+                    Loop While InKey$ = ""
+                    Print
+                    Print "they look up from their game"
+                    Do
+                    Loop While InKey$ = ""
+                    Print
+                    Print "GUYS:Hey you must be Gefion Freelander, your bunks over in the corner, you"
+                    Print "can put your stuff down there and if you want you could join in."
+                    Do
+                    Loop While InKey$ = ""
+                    Print "GEFION:Thanks "
+                    Print
+                    Print "1)But I'm really tired so I'll try and get some sleep"
+                    Print "2)But I never was good at cards so i'll go have a look around this place"
+                    If state.CASH > 0 Then Print "3)Sure I'll play a hand or two"
+
+                    Do
+                        how$ = InKey$
+
+                        Select Case how$
+
+                            Case Chr$(49)
+                                Print "GEFION:Ahh these beds are cumfy"
+                                Print
+                                Print "slowly you fall asleep...."
+                                Print
+                                Do
+                                Loop While InKey$ = ""
+                                level1 = 1
+                                Exit Function
+
+                            Case Chr$(50)
+                                exitloop = 1
+                                Exit Do
+
+                            Case Chr$(51)
+                                If state.CASH > 0 Then
+                                    Print
+                                    Print "GUYS:You know how to play right Gefion?"
+                                    Print
+                                    Do
+                                    Loop While InKey$ = ""
+                                    Print "GEFION:Ohh yeah place your bet and pick a number between 1 and 10 "
+                                    Print "then if the card dealt out to you is the same number You win"
+                                    Print "what your bet was. If you choose the right number and if you "
+                                    Print "get within one of the number you get half your bet back, if you "
+                                    Print "don't pick the right number, you lose half your bet."
+                                    Print
+                                    Do
+                                    Loop While InKey$ = ""
+                                    Print "GUYS:All right lets play"
+                                    Print
+                                    Do
+                                    Loop While InKey$ = ""
+                                    Do
+                                        GoSub gamble
+                                    Loop Until exitloops = 1
+                                    Exit Do
+
+                                    gamble:
+                                    Cls 0
+                                    Draw "BL315 BU180"
+                                    Draw p$
+                                    Draw L$
+                                    Draw A$
+                                    Draw C$
+                                    Draw e$
+
+                                    Draw "BR45"
+
+                                    Draw Y$
+                                    Draw O$
+                                    Draw U$
+                                    Draw R$
+
+                                    Draw "BR45"
+
+                                    Draw B$
+                                    Draw e$
+                                    Draw t$
+
+                                    Draw "bl315"
+
+                                    Draw "bl310 bd390"
+
+                                    Draw C$
+                                    Draw A$
+                                    Draw s$
+                                    Draw h$
+
+                                    Draw "br130 bu390"
+
+                                    View Print 7 To 30
+
+                                    Locate 28, 27
+                                    Print "$"; state.CASH
+
+
+
+                                    Locate 7, 1
+                                    Input bet$
+
+                                    bet = Val(bet$)
+                                    If bet > 100 Then Let bet = 100
+                                    Locate 7, 1
+                                    Print bet
+                                    Cls 0
+
+                                    Draw "BL292 BU180"
+                                    Draw p$
+                                    Draw i$
+                                    Draw C$
+                                    Draw K$
+
+                                    Draw "br45"
+
+                                    Draw A$
+
+                                    Draw "br45"
+
+                                    Draw n$
+                                    Draw U$
+                                    Draw m$
+                                    Draw B$
+                                    Draw e$
+                                    Draw R$
+
+                                    Draw "bl293"
+
+                                    Draw "bl310 bd390"
+
+                                    Draw C$
+                                    Draw A$
+                                    Draw s$
+                                    Draw h$
+
+                                    Draw "br130 bu390"
+
+                                    View Print 7 To 30
+
+                                    Locate 28, 27
+                                    Print "$"; state.CASH
+
+
+                                    Locate 7, 1
+
+                                    Input number$
+
+                                    number = Val(number$)
+
+
+
+                                    Locate 7, 1
+                                    Print number
+
+
+                                    Randomize Timer
+                                    x% = Int(Rnd * 10) + 1
+
+                                    Print
+                                    Print
+                                    Print x%
+
+                                    If x% = number + 1 Or x% = number - 1 Then
+                                        Draw "BD50 BL112"
+
+                                        Draw C$
+                                        Draw L$
+                                        Draw O$
+                                        Draw s$
+                                        Draw e$
+
+                                        Draw "BL113"
+
+                                        If settings.sounds = 1 Then Play "mb  L15 C C"
+                                        If settings.sounds = 2 Then Play "  L15 C C"
+                                        state.CASH = state.CASH + (bet / 2)
+
+                                        Do
+                                        Loop While InKey$ = ""
+                                    End If
+
+                                    If x% = number Then
+                                        Draw "bd50 BL157"
+
+                                        Draw Y$
+                                        Draw O$
+                                        Draw U$
+
+                                        Draw "BR45"
+
+                                        Draw w$
+                                        Draw i$
+                                        Draw n$
+
+                                        Draw "BL158"
+
+                                        If settings.sounds = 1 Then Play "mb l15 c d"
+                                        If settings.sounds = 2 Then Play "l15 cd"
+
+
+                                        state.CASH = state.CASH + bet
+
+                                        Do
+                                        Loop While InKey$ = ""
+
+                                    End If
+
+                                    If x% >= (number + 2) Or x% <= (number - 2) Then
+                                        Draw "bd50 BL180"
+                                        Draw Y$
+                                        Draw O$
+                                        Draw U$
+                                        Draw "BR45"
+                                        Draw L$
+                                        Draw O$
+                                        Draw s$
+                                        Draw e$
+
+                                        state.CASH = state.CASH - (bet / 2)
+
+
+
+                                        If settings.sounds = 1 Then Play "mb l15 d c"
+                                        If settings.sounds = 2 Then Play "l15 d c"
+
+                                        Do
+                                        Loop While InKey$ = ""
+
+                                    End If
+                                    Cls 0
+                                    Draw "bl225"
+
+                                    Draw p$
+                                    Draw L$
+                                    Draw A$
+                                    Draw Y$
+
+                                    Draw "BR45"
+
+                                    Draw A$
+                                    Draw g$
+                                    Draw A$
+                                    Draw i$
+                                    Draw n$
+
+                                    Draw "bl225"
+
+                                    Draw "bd50"
+
+                                    Draw "bl67"
+
+                                    Draw Y$
+                                    Draw "br45"
+                                    Draw n$
+
+                                    Draw "bl68"
+                                    Draw "bl310 bd160"
+
+                                    Draw C$
+                                    Draw A$
+                                    Draw s$
+                                    Draw h$
+
+                                    Draw "br130 bu390"
+
+                                    View Print 7 To 30
+
+
+                                    Locate 28, 27
+                                    Color 15
+                                    If state.CASH < 0 Then Let state.CASH = 0
+                                    Print "$"; state.CASH
+                                    Color 15
+
+
+                                    Do
+                                        choose$ = InKey$
+
+                                        Select Case choose$
+
+                                            Case Is = "Y"
+                                                If state.CASH > 0 And state.CASH < 300 Then
+                                                    Return
+                                                Else
+                                                    If state.CASH < 0 Then Let state.CASH = 0
+                                                    exitloops = 1
+                                                    exitloop = 1
+                                                    Return
+                                                End If
+
+                                            Case Is = "N"
+                                                If state.CASH < 0 Then Let state.CASH = 0
+                                                exitloops = 1
+                                                exitloop = 1
+                                                Return
+
+                                            Case Is = "y"
+                                                If state.CASH > 0 And state.CASH < 300 Then
+                                                    Return
+                                                Else
+                                                    If state.CASH < 0 Then Let state.CASH = 0
+                                                    exitloop = 1
+                                                    exitloops = 1
+                                                    Return
+                                                End If
+
+                                            Case Is = "n"
+                                                If state.CASH < 0 Then Let state.CASH = 0
+                                                exitloop = 1
+                                                exitloops = 1
+                                                Return
+
+
+                                        End Select
+
+                                    Loop
+                                End If
+
+                        End Select
+
+                    Loop
+
+                Case 4
+                    Cls 0
+                    View Print 7 To 30
+                    Draw "bu200 bl135"
+                    Draw B$
+                    Draw A$
+                    Draw t$
+                    Draw t$
+                    Draw L$
+                    Draw e$
+                    Draw "bl135"
+                    Print "WELCOME TO THE RENOBU BATTLE SIMULATOR LT FREELANDER, BEFORE WE BEGIN WITH"
+                    Print "A MOCK BATTLE YOU WILL UNDERGO A QUICK TUTORIAL PRESS ANY KEY TO CONTINUE"
+                    Do: Loop While InKey$ = ""
+                    Print
+                    Print "Battles are set out in two columns, in the left column there is you and any"
+                    Print "allies you may have. In the right column are the enemies. To the bottom of "
+                    Print "the screen are the two weapon boxes, more about them later. and at the top"
+                    Print "of the screen is the range indicator"
+                    Do: Loop While InKey$ = ""
+                    Print
+                    Print "each character fighting has a number of stats."
+                    Do: Loop While InKey$ = ""
+                    Print
+                    Print "The first is health this is self explanatory. It can be purchased, found or"
+                    Print "given to you "
+                    Do: Loop While InKey$ = ""
+                    Print
+                    Print "The second is power, this is the characters physical and mental strength."
+                    Print "The higher the power level your attacks become more powerful you heal"
+                    Print "you and others faster and you are more resistant to attacks. This"
+                    Print "automatically increases as you progress."
+                    Do: Loop While InKey$ = ""
+                    Print
+                    Print "The third is your weapon now this is where the weapon box comes into play"
+                    Print "the weapon box shows the stats of the weapon the character selected has if"
+                    Print "the character has more than one weapon you can cycle through with the left"
+                    Print "and right keys. There are three weapon stats, A (accuracy out of 10),"
+                    Print "AP (attacking power out of 200), and R (range out of 100). Above the weapons"
+                    Print "name is the slot number this is for characters with more than one weapon."
+                    Print "NOTE:This is only a viewing tool and cycling through the different weapon"
+                    Print "doesnt change any characters current weapon that has to be done using the"
+                    Print "weapon command which can only be used by gefion (more about WEAPON soon)"
+                    Do: Loop While InKey$ = ""
+                    Print
+                    Print "When you begin the battle you will see a message in the top left of the"
+                    Print "screen saying 'select fighter' cycle through the characters by using space"
+                    Print "this selects the character you will use to fight for that turn."
+                    Print "when you have selected a character press enter."
+                    Do: Loop While InKey$ = ""
+                    Print
+                    Print "Next to the selected character is a selection bar that allows you to choose"
+                    Print "from a range of options you can cycle through these by pressing space"
+                    Do: Loop While InKey$ = ""
+                    Print
+                    Print "the first option is attack, to attack press enter when the attack option is"
+                    Print "displayed the selection bar will change to the message 'select enemy to "
+                    Print "attack' and a small red dot will appear to the left of the topmost enemy this "
+                    Print "selects which enemy to attack cycle this with the space bar then press enter "
+                    Print "to attack that enemy and his health will be reduced when an enemies health"
+                    Print "reaches zero he will go red, this indicates that he is dead and attacking him"
+                    Print "will do  nothing. The battle ends when either you or all your enemies die."
+                    Print "NOTE:The attack command reduces your power level"
+                    Do: Loop While InKey$ = ""
+                    Print
+                    Print "The next option is heal, this works exactly like attack except a small green"
+                    Print "dot will appear by you and your allies. Cycle through with space then press "
+                    Print "enter to heal NOTE:you cannot bring allies back from the dead with this command."
+                    Print "NOTE:Each time you use heal it becomes half as effective (for the character "
+                    Print "in question) but this is only over the course of one battle."
+                    Print "NOTE:The heal command severly depletes your power level."
+                    Do: Loop While InKey$ = ""
+                    Print
+                    Print "the third option is run, this allows you in some situations to run away from "
+                    Print "a battle. The message in the top left of the screen will indicate whether you"
+                    Print "can escape from a battle or whether you have to fight it out."
+                    Do: Loop While InKey$ = ""
+                    Print
+                    Print "the fourth option is weapon, this allows you to cycle through your arsenal. "
+                    Print "once weapon is selected use enter to cycle through your weapons."
+                    Print "NOTE:You cannot use this option for characters other than your own."
+                    Do: Loop While InKey$ = ""
+                    Print
+                    Print "the fifth is defend which makes you very resiliant to attacks for one turn, it"
+                    Print "also increases your power level at a faster than normal rate for that turn."
+                    Do: Loop While InKey$ = ""
+                    Print
+                    Print "the battles are turn based i.e you take a turn then the enemy and so on."
+                    Print "at the start of the battle it is randomly decided who starts first."
+                    Print "NOTE:once you choose an option you cant cancel it if you change your mind so"
+                    Print "choose carefully."
+                    Print "NOTE:every option except weapon takes up one turn."
+                    Print "NOTE:if a character doesnt do anything his power level will slowly increase"
+                    Print "to its original amount."
+                    Do: Loop While InKey$ = ""
+                    Print
+                    Print "before every battle you will be given a breif description of your battle"
+                    Print "ground, use this to decide which weapon to use as some are more effective in"
+                    Print "certain situations than others. However in this tutorial you may choose the "
+                    Print "battle field."
+                    Print "NOTE: The range indicator also shows this info but in numerical form, 100"
+                    Print "being the highest combat range."
+                    Do: Loop While InKey$ = ""
+                    Print
+
+                    Print "I will now generate some enemies for practice"
+                    Print "Good Luck!"
+                    Print "NOTE:This is just a simulator and you cannot lose any health or gain any "
+                    Print "power the stats in this battle dont affect your real stats, however real"
+                    Print "battles will."
+                    Cls 2
+                    cursor1 = 1
+                    Locate 7, 1
+                    Print "Select battle type:"
+                    Locate 8, 1
+                    Print "o CLOSE RANGE BATTLE "
+                    Print "  MEDIUM RANGE BATTLE"
+                    Print "  LONG RANGE BATTLE  "
+
+                    enemy(1).exist = 1
+                    enemy(1).NAMES = "SQUAD LEADER"
+                    enemy(1).h = 200
+                    enemy(1).mh = 200
+                    enemy(1).p = 50
+                    enemy(1).mp = 50
+                    enemy(1).WEAPON = "machine gun"
+                    enemy(1).range = 20
+                    enemy(1).attackp = 40
+                    enemy(1).acc = 5
+                    enemy(1).death = 0
+                    enemy(1).upg = 15
+
+                    enemy(2).exist = 1
+                    enemy(2).NAMES = "GUARD 1"
+                    enemy(2).h = 50
+                    enemy(2).mh = 50
+                    enemy(2).p = 10
+                    enemy(2).mp = 10
+                    enemy(2).WEAPON = "sniper rifle"
+                    enemy(2).range = 100
+                    enemy(2).attackp = 30
+                    enemy(2).acc = 9
+                    enemy(2).death = 0
+                    enemy(2).upg = 15
+
+                    enemy(3).exist = 1
+                    enemy(3).NAMES = "GUARD 2"
+                    enemy(3).h = 100
+                    enemy(3).mh = 100
+                    enemy(3).p = 20
+                    enemy(3).mp = 20
+                    enemy(3).WEAPON = "shotgun"
+                    enemy(3).range = 20
+                    enemy(3).attackp = 30
+                    enemy(3).acc = 4
+                    enemy(3).death = 0
+                    enemy(3).upg = 15
+
+                    enemy(4).exist = 0
+
+                    DIM allyCopy(1 to 4) as allystat
+                    allyCopy(1) = ally(1)
+
+                    allyCopy(2).NAMES = "RENOBU GUARD"
+                    allyCopy(2).exist = 1
+                    allyCopy(2).acc = 7
+                    allyCopy(2).attackp = 40
+                    allyCopy(2).range = 60
+                    allyCopy(2).p = 50
+                    allyCopy(2).mp = 50
+                    allyCopy(2).h = 100
+                    allyCopy(2).mh = 100
+                    allyCopy(2).WEAPON = "SHOCK RIFLE"
+                    allyCopy(2).death = 0
+                    allyCopy(2).DEFE = 0
+                    allyCopy(2).price = 100
+                    allyCopy(2).upg = 15
+                    allyCopy(2).ad = 0
+                    allyCopy(2).adcol = 15
+
+                    allyCopy(3).exist = 0
+                    allyCopy(4).exist = 0
+
+                    Dim context As BattleContext
+                    context.batcash = 0
+                    context.turndef = 0
+                    context.aggressor = 60
+                    context.healer = 30
+                    context.brange = 10
+
+                    Dim stateCopy as GameState
+                    stateCopy = state
+
+                    Do
+                        choose$ = InKey$
+
+                        Select Case choose$
+
+                            Case Chr$(32)
+                                cursor1 = cursor1 + 1
+                                If cursor1 > 3 Then cursor1 = 1
+                                Select Case cursor1
+
+                                    Case 1
+                                        Locate 8, 1
+                                        Print "o CLOSE RANGE BATTLE "
+                                        Print "  MEDIUM RANGE BATTLE"
+                                        Print "  LONG RANGE BATTLE  "
+                                        context.brange = 10
+
+                                    Case 2
+                                        Locate 8, 1
+                                        Print "  CLOSE RANGE BATTLE "
+                                        Print "o MEDIUM RANGE BATTLE"
+                                        Print "  LONG RANGE BATTLE  "
+                                        context.brange = 50
+
+                                    Case 3
+                                        Locate 8, 1
+                                        Print "  CLOSE RANGE BATTLE "
+                                        Print "  MEDIUM RANGE BATTLE"
+                                        Print "o LONG RANGE BATTLE  "
+                                        context.brange = 100
+
+                                End Select
+
+                            Case Chr$(13)
+                                Exit Do
+
+                        End Select
+
+                    Loop
+
+                    'These mock battles don't change any of the games real state, so we need to pass
+                    'in copies instead
+                    battleResult = doBattle(stateCopy, allyCopy(), weapon(), enemy(), settings, context)
+
+                    Cls 0
+                    View Print 7 To 30
+                    Draw "bu200 bl135"
+                    Draw B$
+                    Draw A$
+                    Draw t$
+                    Draw t$
+                    Draw L$
+                    Draw e$
+                    Draw "bl135"
+                    If battleResult = 0 Then
+                        Print "You lose better luck next time"
+                    Else
+                        Print "congratulations you won the battle."
+                    End If
+
+                    Print "this concludes the tutorial. However feel free to try"
+                    Print "the various weapons in the lab by doing this again to see which you prefer"
+
+                    Do: Loop While InKey$ = ""
+                    exitloop = 1
+
+                Case 5
+                    Cls 0
+                    Draw "bu180 bl 202"
+                    Draw R$
+                    Draw e$
+                    Draw n$
+                    Draw O$
+                    Draw B$
+                    Draw U$
+                    Draw "br45"
+                    Draw h$
+                    Draw Q$
+                    Draw "bl203 bd50 bl202"
+                    Draw e$
+                    Draw A$
+                    Draw s$
+                    Draw t$
+                    Draw "br45"
+                    Draw w$
+                    Draw i$
+                    Draw n$
+                    Draw g$
+                    Draw "bl203"
+                    View Print 10 To 30
+                    Print "RENOBU WEAPONS LAB"
+                    Print
+                    Print
+                    Print "DR MORGAN:Ahh Hello Lt freelander You have yet to choose a weapon yah?"
+                    Do
+                    Loop While InKey$ = ""
+                    Print
+                    Print "GEFION:Among other things doc"
+                    Do
+                    Loop While InKey$ = ""
+                    Print
+                    Print "DR MORGAN:Well Ill show the tools of the trade , some may be familier but there"
+                    Print "will  be some surprises. "
+                    Do
+                    Loop While InKey$ = ""
+                    Print
+                    Print "DR MORGAN:Right this is all standard issue Renobu battle gear "
+                    Do
+                    Loop While InKey$ = ""
+
+                    Print
+                    Print "He pulls up a large bag and begins pulling out a multitude of items"
+                    Do
+                    Loop While InKey$ = ""
+
+                    Print
+                    Print "DR MORGAN:First is the body armour ,its about 500 grams but it can stop a"
+                    Print "low calibre rail slug and can also absorb around half th heat of a medium"
+                    Print "hand laser and gives off no heat signature in infa red.And it includes a"
+                    Print "heartbeat sensor jamming device then there is the night vision/infa red"
+                    Print "headset with a fully encrypted communiation system. Then the usual rebreather"
+                    Print ", it will last about 20 minutes with a 500ml tank of air.And of course the"
+                    Print "secondary weapon, a fine titanium broadsword."
+                    Print
+                    Print "GEFION: Of course."
+                    Do
+                    Loop While InKey$ = ""
+                    Print
+                    Print "DR MORGAN:Now come and choose a primary weapon."
+                    Print "1)First we have the series 4 assult shotgun.It Features the option to go fully "
+                    Print "automatic, has a 10 shot magazine and aerodynamic shot which adds  another  20  "
+                    Print "metres of range  but  essentially is  still close range where  it  is  deadly. "
+                    Print
+                    Print "2)next is the RB 9 rail pistol, it's semi automatic with a 50 shot mag and an "
+                    Print "effective kill range of 1500 metres, of course it cant match the  power of  a "
+                    Print "full railgun or  the  range  but it is  the most  powerful  handgun  that  is "
+                    Print "projectile based, packing a lethal punch from huge distance and it also comes"
+                    Print "with a zoomable scope"
+                    Print
+                    Print "3)And last  we have the DDC general combat laser, it's made by the same people  "
+                    Print "who make the Akura class battleship lasers except these dont pack  1.5 trillion"
+                    Print "volts of energy but a perfectly acceptable 90 thousand, enough  to  down anyone "
+                    Print "this version is capable of firing once every 2  seconds, much faster than  the"
+                    Print "last but because of this it can overheat after long periods of continuous fire"
+                    Print "If the generator does short out another can be put in just  like  replacing  a"
+                    Print "magazine "
+                    Print
+                    Do
+                    Loop While InKey$ = ""
+                    Randomize Timer
+                    whatee = Int(Rnd * 3) + 1
+                    If whatee = 1 Then reply$ = "fascinating, well "
+                    If whatee = 2 Then reply$ = "how interesting I think "
+                    If whatee = 3 Then reply$ = "Right , umm If you put it that way "
+                    Print "GEFION:"; reply$; " I'll take number "
+                    Do
+                        gunchoose$ = InKey$
+
+                        state.maxWeapons = 2
+                        Select Case gunchoose$
+                            Case Is = Chr$(49)
+                                weapon(2).NAME = "AUTO SHOTGUN"
+                                weapon(2).range = 30
+                                weapon(2).attackp = 50
+                                weapon(2).acc = 3
+                                Exit Do
+
+                            Case Is = Chr$(50)
+                                weapon(2).NAME = "RAIL PISTOL"
+                                weapon(2).range = 60
+                                weapon(2).attackp = 25
+                                weapon(2).acc = 7
+                                Exit Do
+
+                            Case Is = Chr$(51)
+                                weapon(2).NAME = "COMBAT LASER"
+                                weapon(2).range = 40
+                                weapon(2).attackp = 40
+                                weapon(2).acc = 5
+                                Exit Do
+                        End Select
+                    Loop
+                    Print
+                    Print "DR MORGAN:Ahh the "; weapon(2).NAME;
+                    Print " exellent choice, but be careful guns are dangerous you know"
+                    Do
+                    Loop While InKey$ = ""
+                    Print
+                    Print "GEFION:Thanks, I didn't know that, to think I could have shot myself (weirdo)"
+                    Do
+                    Loop While InKey$ = ""
+                    Print
+                    Print "DR MORGAN:Yes Yes or someone else"
+                    Do
+                    Loop While InKey$ = ""
+                    exitloop = 1
+
+                Case 6
+                    Cls 0
+                    Draw "bu180 bl 202"
+                    Draw R$
+                    Draw e$
+                    Draw n$
+                    Draw O$
+                    Draw B$
+                    Draw U$
+                    Draw "br45"
+                    Draw h$
+                    Draw Q$
+                    Draw "bl203 bd50 bl202"
+                    Draw e$
+                    Draw A$
+                    Draw s$
+                    Draw t$
+                    Draw "br45"
+                    Draw w$
+                    Draw i$
+                    Draw n$
+                    Draw g$
+                    Draw "bl203"
+                    View Print 10 To 30
+                    Print "I really should fill in this gap, but watcha gonna do -GLENN"
+                    Do
+                    Loop While InKey$ = ""
+                    exitloop = 1
+
+            End Select
+
+        Loop Until exitloop = 1
+    Loop
+
+    cauculate3:
+    Do
+        Select Case cursor
+
+            Case 1
+                Let x% = 25
+                Let Y% = 150
+                x1% = 290
+                y1% = 215
+                Put (x1%, y1%), door1%()
+                x1% = 635
+                y1% = 305
+                Put (x1%, y1%), door1%()
+                x1% = 295
+                y1% = 370
+                Put (x1%, y1%), door1%()
+                x1% = 341
+                y1% = 370
+                Put (x1%, y1%), door1%()
+
+
+            Case 2
+                x1% = 290
+                y1% = 215
+                Put (x1%, y1%), door1%()
+                x1% = 635
+                y1% = 305
+                Put (x1%, y1%), door1%()
+                x1% = 295
+                y1% = 370
+                Put (x1%, y1%), door1%()
+                x1% = 341
+                y1% = 370
+                Put (x1%, y1%), door1%()
+                Let x% = 25
+                Let Y% = 325
+
+            Case 3
+                x1% = 290
+                y1% = 215
+                Put (x1%, y1%), door1%()
+                x1% = 635
+                y1% = 305
+                Put (x1%, y1%), door1%()
+                x1% = 295
+                y1% = 370
+                Put (x1%, y1%), box%()
+                x1% = 341
+                y1% = 370
+                Put (x1%, y1%), door1%()
+                Let x% = 315
+                Let Y% = 395
+
+            Case 4
+                x1% = 290
+                y1% = 215
+                Put (x1%, y1%), door1%()
+                x1% = 635
+                y1% = 305
+                Put (x1%, y1%), door1%()
+                x1% = 295
+                y1% = 370
+                Put (x1%, y1%), door1%()
+                x1% = 305
+                Y% = 370
+                Put (x1%, y1%), box%()
+                Let x% = 315
+                Let Y% = 395
+
+            Case 5
+                x1% = 290
+                y1% = 215
+                Put (x1%, y1%), door1%()
+                x1% = 599
+                y1% = 305
+                Put (x1%, y1%), box%()
+                x1% = 295
+                y1% = 370
+                Put (x1%, y1%), door1%()
+                x1% = 341
+                y1% = 370
+                Put (x1%, y1%), door1%()
+                Let x% = 625
+                Let Y% = 330
+
+            Case 6
+                x1% = 290
+                y1% = 215
+                Put (x1%, y1%), box%()
+                x1% = 635
+                y1% = 305
+                Put (x1%, y1%), door1%()
+                x1% = 295
+                y1% = 370
+                Put (x1%, y1%), door1%()
+                x1% = 341
+                y1% = 370
+                Put (x1%, y1%), door1%()
+                Let x% = 310
+                Let Y% = 240
+
+        End Select
+        Put (x%, Y%), gefion%()
+        Do
+            choose$ = InKey$
+
+            Select Case choose$
+
+                Case Chr$(32)
+                    If settings.sounds = 1 Then Play "l60 mb <<c>>"
+                    Select Case cursor
+
+                        Case 1
+                            Let x% = 25
+                            Let Y% = 150
+                            x1% = 290
+                            y1% = 215
+                            Put (x1%, y1%), door1%(), Xor
+                            x1% = 635
+                            y1% = 305
+                            Put (x1%, y1%), door1%(), Xor
+                            x1% = 295
+                            y1% = 370
+                            Put (x1%, y1%), door1%(), Xor
+                            x1% = 341
+                            y1% = 370
+                            Put (x1%, y1%), door1%(), Xor
+
+
+                        Case 2
+                            x1% = 290
+                            y1% = 215
+                            Put (x1%, y1%), door1%(), Xor
+                            x1% = 635
+                            y1% = 305
+                            Put (x1%, y1%), door1%(), Xor
+                            x1% = 295
+                            y1% = 370
+                            Put (x1%, y1%), door1%(), Xor
+                            x1% = 341
+                            y1% = 370
+                            Put (x1%, y1%), door1%(), Xor
+                            Let x% = 25
+                            Let Y% = 325
+
+                        Case 3
+                            x1% = 290
+                            y1% = 215
+                            Put (x1%, y1%), door1%(), Xor
+                            x1% = 635
+                            y1% = 305
+                            Put (x1%, y1%), door1%(), Xor
+                            x1% = 295
+                            y1% = 370
+                            Put (x1%, y1%), box%(), Xor
+                            x1% = 341
+                            y1% = 370
+                            Put (x1%, y1%), door1%(), Xor
+                            Let x% = 315
+                            Let Y% = 395
+
+                        Case 4
+                            x1% = 290
+                            y1% = 215
+                            Put (x1%, y1%), door1%(), Xor
+                            x1% = 635
+                            y1% = 305
+                            Put (x1%, y1%), door1%(), Xor
+                            x1% = 295
+                            y1% = 370
+                            Put (x1%, y1%), door1%(), Xor
+                            x1% = 305
+                            Y% = 370
+                            Put (x1%, y1%), box%(), Xor
+                            Let x% = 315
+                            Let Y% = 395
+
+                        Case 5
+                            x1% = 290
+                            y1% = 215
+                            Put (x1%, y1%), door1%(), Xor
+                            x1% = 599
+                            y1% = 305
+                            Put (x1%, y1%), box%(), Xor
+                            x1% = 295
+                            y1% = 370
+                            Put (x1%, y1%), door1%(), Xor
+                            x1% = 341
+                            y1% = 370
+                            Put (x1%, y1%), door1%(), Xor
+                            Let x% = 625
+                            Let Y% = 330
+
+                        Case 6
+                            x1% = 290
+                            y1% = 215
+                            Put (x1%, y1%), box%(), Xor
+                            x1% = 635
+                            y1% = 305
+                            Put (x1%, y1%), door1%(), Xor
+                            x1% = 295
+                            y1% = 370
+                            Put (x1%, y1%), door1%(), Xor
+                            x1% = 341
+                            y1% = 370
+                            Put (x1%, y1%), door1%(), Xor
+                            Let x% = 310
+                            Let Y% = 240
+
+                    End Select
+
+                    cursor = cursor + 1
+                    If cursor >= 7 Then cursor = 1
+                    Put (x%, Y%), gefion%(), Xor
+                    Exit Do
+
+                Case Chr$(105), Chr$(73), Chr$(27)
+                    If settings.sounds = 1 Then Play "l60 mb <<c>>"
+                    if igmenu = 0 Then
+                        level1 = 0
+                        Exit Function
+                    End If
+
+                    Cls 0
+                    Let x1% = 345
+                    Let Y% = 370
+                    Line (x1%, y1%)-(x1% + 40, y1%), 5
+                    Line (x1% + 40, y1%)-(x1% + 40, y1% + 4), 5
+                    Line (x1% - 40, y1% + 4)-(x1%, y1% + 4), 5
+                    Line (x1%, y1% + 4)-(x1%, y1%), 5
+                    Paint (x1% - 1, y1% + 1), 5
+                    Get (x1%, y1%)-(x1% + 40, y1% + 4), box%()
+                    GO = 1
+                    Return
+
+                Case Chr$(13)
+                    If settings.sounds = 1 Then Play "l60 mb <<c>>"
+                    Put (x%, Y%), gefion%(), Xor
+                    Return
+
+            End Select
+        Loop
+    Loop
+
+End Function

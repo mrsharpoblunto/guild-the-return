@@ -1,0 +1,1487 @@
+'WELCOME TO THE SUSPENDED REALITY ENGINE  V1.52
+'
+'IT HAS CHANGED A BIT SINCE YOU LAST SAW IT
+'LAYOUT HAS BEEN CHANGED VERY SLIGHTLY TO HELP INTRODUCE NEW STANDARD
+'CONVENTIONS ALSO ARRAYS HAVE BEEN INTRODUCED REMARKING HAS IMPROVED
+'AS HAS AI AND THE CODE HAS BEEN CRUNCHED SOMEWHAT ALSO THE SCREEN DOES
+'NOT CLEAR BETWEEN TURNS AND BUGS HAVE BEEN FIXED
+'
+'HERE IS A VERY BASIC CODE LAYOUT OF THE ENGINE
+'
+'                       DEFINE VARIABLES
+'                         DRAW LAYOUT
+'            DO: SWITCH BETWEEN PLAYER AND AI TURNS: LOOP
+'                  PLAYER CONTROLLED GOSUB: RETURN
+'                         AI GOSUB: RETURN
+'          A WHOLE PILE OF GOSUBS FOR VARIOUS PURPOSES
+'
+'IT HEAVILY RELIES ON GOSUBS AND DO LOOPS WHICH IS NO BAD THING AND
+'I AM ALWAYS IMPROVING THE CODE TO MAKE IT MORE VERSATILE AND EASIER TO EDIT
+'AND MORE EFFICIENT
+'
+'AT PRESENT THE MAN GOAL(S) ARE TO IMPROVE AI (I LOST THE VERSION WITH GOOD
+'AI) TWEAKABILITY IE. DIFFERING VICTORY CONDITIONS SCRIPTED EVENTS(PERHAPS)
+'TO MAKE IT MORE CUSTOMISABLE FOR BATTLE CREATION SO THEY WILL BE MORE
+'VARIED AND INTERESTING AND YOU WILL BE ABLE TO DEFINE ALOT MORE OR JUST
+'LEAVE IT TO DEFAULTS AND LET THE COMPUTER DECIDE ALSO I WOULD LIKE TO HAVE
+'MORE DYNAMIC EVENTS TO ADD INTEREST IE RECIEVING 2 TURNS IN A ROW FOR
+'WHATEVER REASON (BAD EXAMPLE BUT YOU SEE WHAT I MEAN)
+'AND OF COURSE I WANT TO CONTINUE TO SHRINK THIS PROGRAM
+
+'REMARKING KEY (MAKES SCANNING THROUGH A LARGE PROGRAM MUCH EASIER)
+
+'!!! = REMOVE BETWEEN THESE (MAINLY FOR ME)
+'??? = START OF IMPORTANT SECTIONS OF CODE
+'*** = CODE THAT CAN BE ALTERED FOR PLAY BALANCING (MOSTLY AT START OF
+'INTEGRATED BATTLE SYSTEM AND VERY END OF BATTLE SYSTEM)
+'>>> = AI BELOW
+'
+'>>>
+'>>> = AI ABOVE
+'
+'$$$ = THE END
+
+Type enemystat
+    NAMES As String * 18
+    exist As Integer
+    acc As Integer
+    attackp As Integer
+    range As Integer
+    p As Integer
+    mp As Integer
+    h As Integer
+    mh As Integer
+    WEAPON As String * 18
+    death As Integer
+    DEFE As Integer
+    upg As Integer
+End Type
+
+Type BattleContext
+    brange As Integer
+    batcash As Integer
+    turndef As Integer
+    aggressor As Integer
+    healer As Integer
+End Type
+
+Function doBattle (state As GameState, ally() As allystat, weapon() As WeaponStat, enemy() As enemystat, settings As SettingsType, context As BattleContext)
+    '*****************************************************************************
+    '* all the variables above would be determined outside the battle system     *
+    '* this is where the battle sub will start when it is part of the game       *
+    '* dont touch these variables they are either constants for the battle system*
+    '* or default values that are automatically determined based on the variables*
+    '* you have specified above                                                  *
+    '*****************************************************************************
+
+    '****************************************************************************
+    Const inc = 1.1 'power increase when idle
+    Const dinc = 1.3 'power increase when defending
+    Const adec = .9 'power deacrease when attacking
+    Const hdec = .5 'power deacrease when healing
+    'note : power is multiplied by those constants (THESE CAN BE TWEAKED AND FOR
+    'PLAY BALANCE IT WILL PROBABLY BE NESACARRY)
+    '****************************************************************************
+
+    'DONT TOUCH
+    ally(1).DEFE = 1
+    ally(2).DEFE = 1
+    ally(3).DEFE = 1
+    ally(4).DEFE = 1
+
+    'DONT TOUCH
+    enemy(1).DEFE = 1
+    enemy(2).DEFE = 1
+    enemy(3).DEFE = 1
+    enemy(4).DEFE = 1
+
+
+    'DONT TOUCH
+    x = 0
+    goons = 0
+    Do
+        x = x + 1
+        goons = goons + ally(x).exist
+    Loop Until x = 4
+    enem = 0
+    x = 0
+    Do
+        x = x + 1
+        enem = enem + enemy(x).exist
+    Loop Until x = 4
+
+    'dont touch
+    bturn = 0
+    htake = 0
+    btime = Timer
+    BATURN = 0
+
+    'sound settings (can be tweaked NO REAL NEEED)
+    Const maxfreq = 1000 'max frequency (in Hz)
+    Const SFREQ = 700 'starting frequency (Hz)
+    Const MINFREQ = 200 'minimum frequency (Hz)
+    Const MULTIPLIER = 1.1 'frequency multiplier (or divider)
+    Const slength = .1 'note length in clockticks (18.2 per sec)
+
+    'CAN BE TWEAKED BUT NO REAL NEED TO
+    Const time1 = 1 'long pause 1 SEC
+    Const time2 = .5 'short pause .5 SEC
+    Const col1 = 13 'HORIZONTAL CO ORDINATES FOR TEXT FOR ALLIES
+    Const col2 = 45 'FOR ENEMIES
+    Const vcol = 6
+
+    '????????????????????????????????????????????????????????????????????????????
+    'DRAWS BORDERS, BOXES ETC IE. BATTLE SYSTEM LAYOUT
+    '????????????????????????????????????????????????????????????????????????????
+    Cls 0
+    Width 80, 30
+    View Print 1 To 30
+    Draw "bu206 bl320"
+    Draw b$
+    Draw a$
+    Draw t$
+    Draw t$
+    Draw l$
+    Draw e$
+    Draw "BR205 bu2 r164 u17 l164 d17 r120 u17 "
+    Locate 2, 62
+    Print "COMBAT RANGE"
+    Locate 2, 76
+    Print context.brange
+    x = 27
+    Do
+        Locate 28, x
+        Print "AP"
+        Locate 28, x + 5
+        Print "A"
+        Locate 28, x + 10
+        Print "R"
+        x = x + 40
+    Loop Until x > 67
+    Locate 4, 2
+    Print "ITEM"
+    Line (1, 47)-(639, 465), 9, B
+    Line (320, 47)-(320, 465), 9
+    Line (1, 47)-(320, 65), 9, B
+    Line (47, 47)-(47, 65), 9
+    Line (63, 47)-(63, 65), 9
+    Line (79, 47)-(79, 65), 9
+    Line (95, 47)-(95, 65), 9
+    Line (280, 47)-(280, 65), 9
+    x = 0
+    y = 447
+    Do
+        Line (x, y)-(x + 320, y), 9
+        Line (x + 194, y - 16)-(x + 320, y - 16), 9
+        Line (x + 194, y - 16)-(x + 194, y + 17), 9
+        Line (x + 236, y - 16)-(x + 236, y + 17), 9
+        Line (x + 278, y - 16)-(x + 278, y + 17), 9
+        Line (x + 33, y)-(x + 33, y + 17), 9
+        x = x + 320
+    Loop Until x > 320
+
+    '????????????????????????????????????????????????????????????????????????????
+    'DETERMINES FIRST TURN
+    '????????????????????????????????????????????????????????????????????????????
+    If context.turndef = 0 Then
+        Randomize Timer
+        turn = Int(Rnd * 2) + 1
+        If turn = 1 Then
+            EVEN = 1
+        Else
+            EVEN = 0
+        End If
+        BATURN = 1
+    Else
+        EVEN = (context.turndef - 1)
+    End If
+
+
+
+    Do
+        exitloop = 0
+        battleturno = 0
+        AGUY = 0
+        eguy = 0
+
+        '????????????????????????????????????????????????????????????????????????????
+        'TESTS FOR VICTORY
+        '????????????????????????????????????????????????????????????????????????????
+        x = 0
+        dead = 0
+        ETOTALPOWER = 0
+        Do
+            x = x + 1
+            ETOTALPOWER = ETOTALPOWER + enemy(x).mp
+            dead = dead + enemy(x).death
+        Loop Until x = enem
+        If dead = enem Then
+            GoSub lPAUSE
+            GoSub victory
+            Exit Do
+        End If
+
+        '????????????????????????????????????????????????????????????????????????????
+        'TESTS FOR LOSS
+        '????????????????????????????????????????????????????????????????????????????
+        If ally(1).death + ally(2).death + ally(3).death + ally(4).death = goons Then
+            GoSub lPAUSE
+            GoSub loss
+            Exit Do
+        End If
+
+        '????????????????????????????????????????????????????????????????????????????
+        'DRAWS WEAPON BOX STATS AT START OF TURN
+        '????????????????????????????????????????????????????????????????????????????
+        If EVEN = 1 And BATURN = 2 Then ELOOK = 1
+        If EVEN = 0 And BATURN = 1 Then ELOOK = 1
+        If ELOOK = 1 Then
+            x = 0
+        Else
+            x = 40
+        End If
+        GoSub boxclear
+        If ELOOK = 0 Then
+            battleturno = 1
+            glook = 1
+            GoSub wepupdate
+        End If
+
+        '????????????????????????????????????????????????????????????????????????????
+        'DRAWS CHARACTERS TEXT STATS
+        '????????????????????????????????????????????????????????????????????????????
+
+        vercol = vcol - 5
+        x = 0
+        Do
+            vercol = vercol + 5
+            x = x + 1
+            If ally(x).exist = 1 Then
+                If ally(x).death = 1 Then Color 4
+                Locate vercol, col1 + 1: Print UCase$(ally(x).NAMES)
+                If ally(x).DEFE >= 2 And ally(x).death = 0 Then Color 2
+                Locate vercol + 1, col1: Print "Health:"; Int(ally(x).h); "          "
+                If ally(x).DEFE >= 2 And ally(x).death = 0 Then Color 15
+                If ally(x).adcol = 9 And ally(x).death = 0 Then Color ally(x).adcol
+                Locate vercol + 2, col1: Print "Power:"; Int(ally(x).p)
+                If ally(x).adcol = 9 And ally(x).death = 0 Then Color 15
+                Locate vercol + 3, col1: Print "Weapon: "
+                If ally(x).death = 0 Then Color ally(x).upg
+                Locate vercol + 3, col1 + 8
+                Print UCase$(ally(x).WEAPON)
+                Color 15
+            End If
+        Loop Until x = 4
+
+        x = 0
+        vercol = vcol - 5
+        Do
+            x = x + 1
+            vercol = vercol + 5
+            If enemy(x).exist = 1 Then
+                If enemy(x).death = 1 Then Color 4
+                Locate vercol, col2 + 1: Print UCase$(enemy(x).NAMES)
+                If enemy(x).DEFE >= 2 And enemy(x).death = 0 Then Color 2
+                Locate vercol + 1, col2: Print "Health:"; Int(enemy(x).h); "          "
+                If enemy(x).DEFE >= 2 And enemy(x).death = 0 Then Color 15
+                Locate vercol + 2, col2: Print "Power:"; Int(enemy(x).p)
+                Locate vercol + 3, col2: Print "Weapon: "
+                If enemy(x).death = 0 Then Color enemy(x).upg
+                Locate vercol + 3, col2 + 8
+                Print UCase$(enemy(x).WEAPON)
+                Color 15
+            End If
+        Loop Until x = 4
+
+        '????????????????????????????????????????????????????????????????????????????
+        'DETERMINES CURRENT TURN
+        '????????????????????????????????????????????????????????????????????????????
+        If EVEN = 1 Then
+            Select Case BATURN
+                Case 1
+                    GoSub yourmove
+                Case 2
+                    GoSub enemyai
+            End Select
+        Else
+            Select Case BATURN
+                Case 1
+                    GoSub enemyai
+                Case 2
+                    GoSub yourmove
+            End Select
+        End If
+
+        Color 15
+    Loop
+
+    Return
+
+
+    'ITS THE PLAYERS TURN
+    '????????????????????????????????????????????????????????????????????????????
+    'HUMAN CONTROLLED ROUTINES
+    '????????????????????????????????????????????????????????????????????????????
+    yourmove:
+    bturn = bturn + 1
+    BATURN = BATURN + 1
+    If BATURN > 2 Then BATURN = 1
+
+    'sets default values
+    battleturno = 1
+    batcurse = 1
+
+    Color 12
+    Locate vcol, col1 - 10
+    Print "SELECT"
+    Locate vcol + 1, col1 - 10
+    Print "FIGHTER"
+    Locate vcol + 1, col1 - 2
+    Print "o"
+    Color 15
+
+    '????????????????????????????????????????????????????????????????????????????
+    'SELECTS YOUR GUY TO DO BATTLE
+    '????????????????????????????????????????????????????????????????????????????
+    Do
+        choose$ = InKey$
+
+        Select Case choose$
+
+            Case Chr$(32)
+                GoSub SCROLLSOUND
+                battleturno = battleturno + 1
+                If battleturno > goons Then battleturno = 1
+                SCROLLCOL = col1 - 2
+                GoSub SCROLLCLEAR
+                Color 12
+                Locate ((battleturno * 5) + (vcol - 4)), col1 - 2: Print "o"
+                Color 15
+                glook = 1
+                GoSub wepupdate
+
+  
+
+            Case Chr$(13)
+                If ally(battleturno).death = 0 Then
+                    GoSub SELECTSOUND
+                    Locate vcol, col1 - 10
+                    Print "       "
+                    Locate vcol + 1, col1 - 10
+                    Print "       "
+                    Locate ((battleturno * 5) + (vcol - 4)), col1 - 2: Print " "
+                    oINo1 = 0
+                    GoSub fightoption
+                    If oINo1 = 1 Then
+                        Exit Do
+                    Else
+                        battleturno = 1
+                    End If
+                End If
+
+        End Select
+    Loop
+    Return
+
+
+    '????????????????????????????????????????????????????????????????????????????
+    'SELECT WHAT YOUR FIGHTER DOES
+    '????????????????????????????????????????????????????????????????????????????
+
+    fightoption:
+    SELECTACTION = 12
+    SELECTACTION$ = "ATTACK"
+    Color SELECTACTION
+    Locate ((battleturno * 5) + (vcol - 4)), col1 - 10: Print SELECTACTION$
+    Color 15
+
+    attackp = ally(battleturno).attackp
+    range = ally(battleturno).range
+    acc = ally(battleturno).acc
+
+    Do
+        choose$ = InKey$
+
+        Select Case choose$
+
+            Case Chr$(27)
+                Color 12
+                Locate ((battleturno * 5) + (vcol - 4)), col1 - 10: Print "      "
+                Locate vcol, col1 - 10
+                Print "SELECT"
+                Locate vcol + 1, col1 - 10
+                Print "FIGHTER"
+                Locate vcol + 1, col1 - 2
+                Print "o"
+                Color 15
+                glook = 1
+                GoSub wepupdate
+                Return
+
+            Case Chr$(32)
+                GoSub SCROLLSOUND
+                batcurse = batcurse + 1
+                If battleturno = 1 Then
+                    If batcurse > 6 Then batcurse = 1
+                Else
+                    If batcurse > 5 Then batcurse = 1
+                End If
+
+                Select Case batcurse
+
+                    Case 1
+                        SELECTACTION = 12
+                        SELECTACTION$ = "ATTACK"
+ 
+                    Case 2
+                        SELECTACTION = 10
+                        SELECTACTION$ = "HEAL  "
+  
+                    Case 3
+                        SELECTACTION = 14
+                        SELECTACTION$ = "RUN   "
+  
+                    Case 4
+                        SELECTACTION = 2
+                        SELECTACTION$ = "DEFEND"
+ 
+                    Case 5
+                        SELECTACTION = 9
+                        SELECTACTION$ = "ITEM  "
+
+                    Case 6
+                        SELECTACTION = 5
+                        SELECTACTION$ = "WEAPON"
+
+                End Select
+                Color SELECTACTION
+                Locate ((battleturno * 5) + (vcol - 4)), col1 - 10: Print SELECTACTION$
+                Color 15
+
+
+            Case Chr$(13)
+                GoSub SELECTSOUND
+                Select Case batcurse
+
+                    Case 1
+                        oINo = 0
+                        GoSub eselect
+                        If oINo = 1 Then
+                            Locate ((battleturno * 5) + (vcol - 4)), col1 - 10: Print "      "
+                            Locate ((battleturno * 5) + (vcol - 3)), col1 - 10: Print "        "
+                            Locate ((battleturno * 5) + (vcol - 2)), col1 - 10: Print "      "
+                            Locate ((eguy * 5) + (vcol - 4)), col2 - 2: Print " "
+                            Exit Do
+                        End If
+
+                    Case 2
+                        oINo = 0
+                        GoSub heal
+                        If oINo = 1 Then
+                            Locate ((battleturno * 5) + (vcol - 4)), col1 - 10: Print "       "
+                            Locate ((battleturno * 5) + (vcol - 3)), col1 - 10: Print "    "
+                            Locate ((battleturno * 5) + (vcol - 2)), col1 - 10: Print "       "
+                            Locate ((AGUY * 5) + (vcol - 4)), col1 - 2: Print " "
+                            Exit Do
+                        End If
+
+                    Case 3
+                        GoSub coward
+                        Exit Do
+
+                    Case 4
+                        Locate ((battleturno * 5) + (vcol - 4)), col1 - 10: Print "      "
+                        GoSub DEFEND
+                        Exit Do
+
+                    Case 5
+                        oINo = state.adrenaline + state.rhq73i + state.rhq73s
+                        GoSub item
+                        If oINo > state.adrenaline + state.rhq73i + state.rhq73s Then
+                            Locate ((battleturno * 5) + (vcol - 4)), col1 - 10: Print "    "
+                            Exit Do
+                        End If
+
+                    Case 6
+                        state.currentWeapon = state.currentWeapon + 1
+                        If state.currentWeapon > state.maxWeapons Then
+                            state.currentWeapon = 1
+                        End If
+                        ally(1).WEAPON = weapon(state.currentWeapon).Name
+                        ally(1).attackp = weapon(state.currentWeapon).attackp
+                        ally(1).range = weapon(state.currentWeapon).range
+                        ally(1).acc = weapon(state.currentWeapon).acc
+                        Locate 9, col1: Print "                         "
+                        Locate 9, col1: Print "Weapon: "; UCase$(ally(1).WEAPON)
+                        glook = 1
+                        GoSub wepupdate
+
+                End Select
+
+        End Select
+    Loop
+    oINo1 = 1
+    Return
+
+    '????????????????????????????????????????????????????????????????????????????
+    'IF THE PLAYER CHOOSES TO ATTACK
+    '????????????????????????????????????????????????????????????????????????????
+    eselect:
+    
+    Color 12
+    Locate ((battleturno * 5) + (vcol - 4)), col1 - 10: Print "SELECT"
+    Locate ((battleturno * 5) + (vcol - 3)), col1 - 10: Print "ENEMY TO"
+    Locate ((battleturno * 5) + (vcol - 2)), col1 - 10: Print "ATTACK"
+    Locate vcol + 1, col2 - 2: Print "o"
+    Color 15
+    eguy = 1
+    ELOOK = 1
+    GoSub wepupdate
+    
+    Do
+        choose$ = InKey$
+
+        Select Case choose$
+
+            Case Chr$(27)
+                Locate ((battleturno * 5) + (vcol - 4)), col1 - 10: Print "      "
+                Locate ((battleturno * 5) + (vcol - 3)), col1 - 10: Print "        "
+                Locate ((battleturno * 5) + (vcol - 2)), col1 - 10: Print "      "
+                Locate ((eguy * 5) + (vcol - 4)), col2 - 2: Print " "
+                Color 12
+                Locate ((battleturno * 5) + (vcol - 4)), col1 - 10: Print "ATTACK"
+                Color 15
+                x = 40
+                GoSub boxclear
+                Return
+
+            Case Chr$(32)
+                GoSub SCROLLSOUND
+                eguy = eguy + 1
+                If eguy > enem Then eguy = 1
+                SCROLLCOL = col2 - 2
+                GoSub SCROLLCLEAR
+                Color 12
+                Locate ((eguy * 5) + (vcol - 4)), col2 - 2: Print "o"
+                Color 15
+                ELOOK = 1
+                GoSub wepupdate
+
+            Case Chr$(13)
+                If enemy(eguy).death = 0 Then
+                    GoSub SELECTSOUND
+
+                    AP = ally(battleturno).p
+
+                    p = enemy(eguy).p
+                    If p < 30 Then p = 30
+
+                    GoSub attackform
+
+                    dec = adec
+                    GoSub playerpdec
+
+                    h = enemy(eguy).h
+                    d = enemy(eguy).DEFE
+
+                    Select Case MISS
+                        Case 0
+                            Color ghit
+                            Locate ((eguy * 5) + (vcol - 4)), col2: Print "Health:"; Int(h); " -"; CInt(attack / d)
+                            Color 15
+                        Case 1
+                            Color ghit
+                            Locate ((eguy * 5) + (vcol - 4)), col2: Print "Health:"; Int(h); " MISS"
+                            Color 15
+                    End Select
+
+                    GoSub sPAUSE
+
+                    enemy(eguy).h = enemy(eguy).h - (attack / enemy(eguy).DEFE)
+                    If enemy(eguy).h <= 0 Then
+                        enemy(eguy).death = 1
+                        enemy(eguy).h = 0
+                    End If
+                    x = 0
+                    Do
+                        x = x + 1
+                        enemy(x).DEFE = 1
+                    Loop Until x = enem
+
+                    oINo = 1
+                    Exit Do
+                End If
+        End Select
+    Loop
+    Return
+
+
+    '????????????????????????????????????????????????????????????????????????????
+    'IF THE PLAYER DECIDES TO HEAL
+    '????????????????????????????????????????????????????????????????????????????
+    heal:
+    Color 10
+    Locate ((battleturno * 5) + (vcol - 4)), col1 - 10: Print "SELECT"
+    Locate ((battleturno * 5) + (vcol - 3)), col1 - 10: Print "ALLY"
+    Locate ((battleturno * 5) + (vcol - 2)), col1 - 10: Print "TO HEAL"
+    Locate vcol + 1, col1 - 2: Print "o"
+    AGUY = 1
+     
+    Color 15
+    battleturnos = battleturno
+    Do
+        choose$ = InKey$
+
+        Select Case choose$
+
+
+            Case Chr$(27)
+                battleturno = battleturnos
+                Locate ((battleturno * 5) + (vcol - 4)), col1 - 10: Print "       "
+                Locate ((battleturno * 5) + (vcol - 3)), col1 - 10: Print "    "
+                Locate ((battleturno * 5) + (vcol - 2)), col1 - 10: Print "       "
+                Locate ((AGUY * 5) + (vcol - 4)), col1 - 2: Print " "
+                Color 10
+                Locate ((battleturno * 5) + (vcol - 4)), col1 - 10: Print "HEAL"
+                Color 15
+                glook = 1
+                GoSub wepupdate
+                Return
+
+            Case Chr$(32)
+                GoSub SCROLLSOUND
+                AGUY = AGUY + 1
+                If AGUY > goons Then AGUY = 1
+                SCROLLCOL = col1 - 2
+                GoSub SCROLLCLEAR
+                Color 10
+                Locate ((AGUY * 5) + (vcol - 4)), col1 - 2: Print "o"
+                Color 15
+                battleturno = AGUY
+                glook = 1
+                GoSub wepupdate
+
+
+            Case Chr$(13)
+                If ally(AGUY).death = 0 Then
+                    battleturno = battleturnos
+                    GoSub SELECTSOUND
+                    hp = ally(battleturno).p
+
+                    GoSub healform
+                    dec = hdec
+                    GoSub playerpdec
+ 
+                    h = ally(AGUY).h
+
+                    Color 10
+                    Locate ((AGUY * 5) + (vcol - 4)), col1: Print "Health:"; Int(h); " +"; CInt(context.healer)
+                    Color 15
+
+                    GoSub sPAUSE
+                    ally(AGUY).h = ally(AGUY).h + context.healer
+                    If ally(AGUY).h > ally(AGUY).mh Then ally(AGUY).h = ally(AGUY).mh
+
+                    x = 0
+                    Do
+                        x = x + 1
+                        enemy(x).DEFE = 1
+                    Loop Until x = enem
+
+                    oINo = 1
+                    Exit Do
+                End If
+        End Select
+    Loop
+    Return
+
+    '????????????????????????????????????????????????????????????????????????????
+    'IF THE PLAYER TRIES TO RUN FROM  THE BATTLE
+    '????????????????????????????????????????????????????????????????????????????
+    coward:
+
+    If RUNAWAY = 1 Then
+        Color 14
+        Locate ((battleturno * 5) + (vcol - 4)), col1 - 10: Print "YOU RUN"
+        Locate ((battleturno * 5) + (vcol - 3)), col1 - 10: Print "FROM THE"
+        Locate ((battleturno * 5) + (vcol - 2)), col1 - 10: Print "BATTLE"
+        Do: Loop While InKey$ = ""
+        doBattle = 1
+        Exit Function
+        'exit sub
+        Color 15
+    Else
+        Color 14
+        Locate ((battleturno * 5) + (vcol - 4)), col1 - 10: Print "THERE IS"
+        Locate ((battleturno * 5) + (vcol - 3)), col1 - 10: Print "NOWHERE "
+        Locate ((battleturno * 5) + (vcol - 2)), col1 - 10: Print "TO RUN"
+        Color 15
+
+        Do: Loop While InKey$ = ""
+        GoSub SELECTSOUND
+        GoSub sPAUSE
+        Locate ((battleturno * 5) + (vcol - 4)), col1 - 10: Print "        "
+        Locate ((battleturno * 5) + (vcol - 3)), col1 - 10: Print "        "
+        Locate ((battleturno * 5) + (vcol - 2)), col1 - 10: Print "      "
+        x = 0
+        Do
+            x = x + 1
+            enemy(x).DEFE = 1
+        Loop Until x = enem
+    End If
+
+    Return
+
+    '????????????????????????????????????????????????????????????????????????????
+    'IF THE PLAYER DECIDES TO DEFEND HIMSELF
+    '????????????????????????????????????????????????????????????????????????????
+    DEFEND:
+    dec = dinc
+    GoSub playerpdec
+
+    DP = ally(battleturno).p
+
+    GoSub DEFENDFORM
+
+    Color 2
+    ally(battleturno).DEFE = DEFENDOR
+    Locate (5 * battleturno) + (vcol - 4), col1: Print "Health:"; Int(ally(battleturno).h); " "
+
+    Color 15
+
+    GoSub sPAUSE
+
+    x = 0
+    Do
+        x = x + 1
+        enemy(x).DEFE = 1
+    Loop Until x = enem
+    Return
+
+
+    '????????????????????????????????????????????????????????????????????????????
+    'IF THE PLAYER DECIDES to use an item
+    '????????????????????????????????????????????????????????????????????????????
+
+    item:
+    Color 12
+    icol = 0
+    Locate 4, 7
+    Print "o"
+    Color 15
+    Locate 4, 14
+    Print "ADRENALINE "
+    Locate 4, 36
+    Print state.adrenaline
+    Do
+        choose$ = InKey$
+
+        Select Case choose$
+
+            Case Chr$(32)
+                Color 12
+                Locate 4, 7 + icol
+                Print " "
+                icol = icol + 2
+                If icol = 6 Then icol = 0
+                Locate 4, 7 + icol
+                Print "o"
+                Locate 4, 14
+                Color 15
+                Select Case icol
+                    Case 0
+                        Print "ADRENALINE "
+                        Locate 4, 37
+                        Print state.adrenaline
+                    Case 2
+                        Print "RHQ73 SHOT "
+                        Locate 4, 37
+                        Print state.rhq73i
+                    Case 4
+                        Print "RHQ73 SPRAY"
+                        Locate 4, 37
+                        Print state.rhq73s
+                End Select
+
+            Case Chr$(13)
+                Select Case icol
+
+                    Case 0
+                        If state.adrenaline > 0 Then
+                            ally(battleturno).p = ally(battleturno).mp * 2
+                            Color 9
+                            Locate ((battleturno * 5) + (vcol - 4) + 1), col1: Print "Power:"; ally(battleturno).p
+                            Color 15
+                            state.adrenaline = state.adrenaline - 1
+                            ally(battleturno).ad = 3
+                            ally(battleturno).adcol = 9
+                            Exit Do
+                        End If
+
+                    Case 2
+                        If state.rhq73i > 0 Then
+                            Color 10
+                            Locate ((battleturno * 5) + (vcol - 4)), col1: Print "Health:"; ally(battleturno).h; " +"; ally(battleturno).mh - ally(battleturno).h
+                            Color 15
+                            ally(battleturno).h = ally(battleturno).mh
+                            state.rhq73i = state.rhq73i - 1
+                            Exit Do
+                        End If
+
+                    Case 4
+                        If state.rhq73s > 0 Then
+                            x = 0
+                            Do
+                                x = x + 1
+                                If ally(x).exist = 1 And ally(x).death = 0 Then
+                                    Color 10
+                                    Locate ((x * 5) + (vcol - 4)), col1: Print "Health:"; ally(x).h; " +"; ally(x).mh - ally(x).h
+                                    Color 15
+                                    ally(x).h = ally(x).mh
+                                End If
+                            Loop Until x = 4
+                            state.rhq73s = state.rhq73s - 1
+                            Exit Do
+                        End If
+
+                End Select
+
+            Case Chr$(27)
+                Locate 4, 14
+                Print "           "
+                Locate 4, 7 + icol
+                Print " "
+                Locate 4, 36
+                Print "   "
+                batcurse = 1
+                Return
+
+        End Select
+    Loop
+    GoSub sPAUSE
+    x = 0
+    Do
+        x = x + 1
+        enemy(x).DEFE = 1
+    Loop Until x = enem
+    nodec = 1
+    GoSub playerpdec
+    Locate 4, 14
+    Print "           "
+    Locate 4, 7 + icol
+    Print " "
+    Locate 4, 36
+    Print "   "
+
+    Return
+
+    '????????????????????????????????????????????????????????????????????????????
+    'AI ROUTINES
+    '????????????????????????????????????????????????????????????????????????????
+
+    enemyai:
+
+
+    bturn = bturn + 1
+    BATURN = BATURN + 1
+    If BATURN > 2 Then BATURN = 1
+    Randomize Timer
+    aichoose = Int(Rnd * 100) + 1
+
+    Select Case aichoose
+
+        '????????????????????????????????????????????????????????????????????????????
+        'AI attacks
+        '????????????????????????????????????????????????????????????????????????????
+        Case 1 To context.aggressor
+            '>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
+
+            If eguy = 0 Then
+                Do
+                    Randomize Timer
+                    eguy = Int(Rnd * enem) + 1
+                    If enemy(eguy).death = 0 And enemy(eguy).exist = 1 Then Exit Do
+                Loop
+            End If
+
+            ELOOK = 1
+            GoSub wepupdate
+
+            Do
+                Randomize Timer
+                battleturno = Int(Rnd * goons) + 1
+                If ally(battleturno).death = 0 Then Exit Do
+            Loop
+
+            '>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
+            '>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
+
+            Locate ((eguy * 5) + (vcol - 4)), col2 + 20
+            Color 12
+            Print "ATTACKING"
+
+            locenemy = vcol - 4
+
+            Do
+                locenemy = locenemy + 5
+                Locate locenemy, col1 - 2
+                Color 12
+                Print "o"
+                GoSub SCROLLSOUND
+                glook = 1
+                GoSub wepupdate
+
+                GoSub sPAUSE
+
+                Locate locenemy, col1 - 2
+                Print " "
+            Loop Until locenemy = (battleturno * 5) + (vcol - 4)
+
+            GoSub SELECTSOUND
+
+            Color 15
+
+            AP = enemy(eguy).p
+            range = enemy(eguy).range
+            acc = enemy(eguy).acc
+            attackp = enemy(eguy).attackp
+
+            p = ally(battleturno).p
+
+            If p < 30 Then p = 30
+
+            'battle formula
+            GoSub attackform
+
+            dec = adec
+
+            GoSub AIPDEC
+
+            'damage indicators
+            d = ally(battleturno).DEFE
+            h = ally(battleturno).h
+
+            htake = htake + (attack / d)
+
+            Select Case MISS
+                Case 0
+                    Color ghit
+                    Locate (battleturno * 5) + (vcol - 4), col1: Print "Health:"; Int(h); " -"; CInt(attack / d)
+                    Color 15
+                Case 1
+                    Color ghit
+                    Locate (battleturno * 5) + (vcol - 4), col1: Print "Health:"; Int(h); " MISS"
+                    Color 15
+            End Select
+
+            GoSub lPAUSE
+
+            attack = (attack / ally(battleturno).DEFE)
+            ally(battleturno).h = ally(battleturno).h - attack
+            If ally(battleturno).h <= 0 Then
+                ally(battleturno).death = 1
+                ally(battleturno).h = 0
+            End If
+
+            Locate (eguy * 5) + (vcol - 4), col2 + 20: Print "         "
+            Locate (battleturno * 5) + (vcol - 4), col1 - 2: Print " "
+
+            '????????????????????????????????????????????????????????????????????????????
+            'SHOULD THE AI DECIDE TO HEAL
+            '????????????????????????????????????????????????????????????????????????????
+        Case (context.aggressor + 1) To ((context.aggressor + 1) + context.healer)
+            '>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
+            Do
+                Randomize Timer
+                eguy = Int(Rnd * enem) + 1
+                If enemy(eguy).death = 0 And enemy(eguy).exist = 1 Then Exit Do
+            Loop
+
+            Do
+                Randomize Timer
+                AGUY = Int(Rnd * enem) + 1
+                If enemy(AGUY).death = 0 And enemy(AGUY).exist = 1 Then Exit Do
+            Loop
+            '>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
+            '>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
+            ELOOK = 1
+            GoSub wepupdate
+            EGUYS = eguy
+            Locate (eguy * 5) + (vcol - 4), col2 + 20
+            Color 10
+            Print "HEALING"
+
+            locenemy = vcol - 4
+            Do
+                locenemy = locenemy + 5
+                Locate locenemy, col2 - 2
+                Print "o"
+                eguy = (locenemy / 5)
+                ELOOK = 1
+                GoSub wepupdate
+                Color 10
+                GoSub SCROLLSOUND
+                GoSub sPAUSE
+                Locate locenemy, col2 - 2
+                Print " "
+            Loop Until locenemy = (AGUY * 5) + (vcol - 4)
+
+            GoSub SELECTSOUND
+            eguy = EGUYS
+            Color 15
+
+            hp = enemy(eguy).p
+
+            GoSub healform
+
+            dec = hdec
+            GoSub AIPDEC
+
+            h = enemy(AGUY).h
+
+            Color 10
+            Locate (AGUY * 5) + (vcol - 4), col2: Print "Health:"; Int(h); " +"; CInt(context.healer)
+            Color 15
+
+            GoSub lPAUSE
+
+            enemy(AGUY).h = enemy(AGUY).h + context.healer
+            If enemy(AGUY).h > enemy(AGUY).mh Then enemy(AGUY).h = enemy(AGUY).mh
+            Locate (eguy * 5) + (vcol - 4), col2 + 20: Print "         "
+            Locate (AGUY * 5) + (vcol - 4), col2 - 2: Print " "
+
+            '????????????????????????????????????????????????????????????????????????????
+            'SHOULD THE AI DEFEND
+            '????????????????????????????????????????????????????????????????????????????
+        Case ((context.aggressor + 1) + context.healer + 1) To 100
+            '>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
+            Do
+                Randomize Timer
+                eguy = Int(Rnd * enem) + 1
+                If enemy(eguy).death = 0 And enemy(eguy).exist = 1 Then Exit Do
+            Loop
+            '>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
+            '>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
+            ELOOK = 1
+            GoSub wepupdate
+            dec = dinc
+            GoSub AIPDEC
+
+            DP = enemy(eguy).p
+            GoSub DEFENDFORM
+            enemy(eguy).DEFE = DEFENDOR
+
+            Color 2
+            Locate (5 * eguy) + (vcol - 4), col2: Print "Health:"; Int(enemy(eguy).h); " "
+            Color 15
+
+            GoSub SELECTSOUND
+            GoSub lPAUSE
+
+
+    End Select
+    DEFE1 = 1
+    x = 0
+    Do
+        x = x + 1
+        ally(x).DEFE = 1
+    Loop Until x = goons
+
+    Return
+
+
+    '????????????????????????????????????????????????????????????????????????????
+    'THIS DOES THE WEAPON BOXES (BOTTOM OF SCREEN)
+    '????????????????????????????????????????????????????????????????????????????
+    wepupdate:
+    Color 15
+    'THE WEAPON INFO BOXES
+    'INFO ON YOU AND YOUR ALLIES
+    If glook = 1 Then
+        na$ = ally(battleturno).WEAPON
+        r = ally(battleturno).range
+        AP = ally(battleturno).attackp
+        a = ally(battleturno).acc
+        Locate 29, 6
+        Print UCase$(na$)
+        Locate 29, 26
+        Print CInt(AP)
+        Locate 29, 31
+        Print CInt(a)
+        Locate 29, 36
+        Print CInt(r)
+        Locate 29, 2
+        If battleturno = 1 Then
+            Print STR$(state.currentWeapon)
+        Else
+            Print "1"
+        End If
+        glook = 0
+    End If
+
+    'INFO ON YOUR ENEMIES
+    If ELOOK = 1 Then
+        na$ = enemy(eguy).WEAPON
+        r = enemy(eguy).range
+        AP = enemy(eguy).attackp
+        a = enemy(eguy).acc
+        Locate 29, 46
+        Print UCase$(na$)
+        Locate 29, 66
+        Print CInt(AP)
+        Locate 29, 71
+        Print CInt(a)
+        Locate 29, 76
+        Print CInt(r)
+        Locate 29, 42
+        Print "1"
+        ELOOK = 0
+    End If
+    Return
+
+    '????????????????????????????????????????????????????????????????????????????
+    'THE TWO SOUND EFFECTS
+    '????????????????????????????????????????????????????????????????????????????
+    SELECTSOUND:
+    'WHEN ENTER IS PRESSED
+    If settings.sounds = 1 Then
+        freq = SFREQ
+        Do
+            Sound freq, slength
+            freq = freq / MULTIPLIER
+        Loop Until freq < MINFREQ
+    End If
+    Return
+
+    SCROLLSOUND:
+    'WHEN SPACE IS PRESSED
+    If settings.sounds = 1 Then
+        freq = SFREQ
+        Do
+            Sound freq, slength
+            freq = freq * MULTIPLIER
+        Loop Until freq > maxfreq
+    End If
+    Return
+
+    '????????????????????????????????????????????????????????????????????????????
+    'HELPS CLEAR CURSOR
+    '????????????????????????????????????????????????????????????????????????????
+    SCROLLCLEAR:
+    del = 0
+    Do
+        del = del + 1
+        Locate (del * 5) + (vcol - 4), SCROLLCOL: Print " "
+    Loop Until del >= 5
+    del = 0
+    Return
+
+    '????????????????????????????????????????????????????????????????????????????
+    'CLEARS A SPECIFIED WEAPON BOX AT THE START OF EACH TURN
+    '????????????????????????????????????????????????????????????????????????????
+    boxclear:
+    Locate 29, x + 6
+    Print "                  "
+    Locate 29, x + 2
+    Print "   "
+    Locate 29, x + 27
+    Print "   "
+    Locate 29, x + 32
+    Print "   "
+    Locate 29, x + 37
+    Print "   "
+    Return
+
+    '????????????????????????????????????????????????????????????????????????????
+    'CONTROLS GEFIONS AND ALLIES POWER LEVELS
+    '????????????????????????????????????????????????????????????????????????????
+    playerpdec:
+    x = 0
+    Do
+        x = x + 1
+        If x = battleturno Then
+            If nodec = 1 Then
+                nodec = 0
+                mul = 1
+            Else
+                mul = dec
+            End If
+        Else
+            mul = inc
+        End If
+        ally(x).p = (ally(x).p * mul)
+        If ally(x).p > ally(x).mp And ally(x).ad = 0 Then ally(x).p = ally(x).mp
+        If ally(x).p > (ally(x).mp * 2) And ally(x).ad > 0 Then ally(x).p = (ally(x).mp * 2)
+
+        If ally(x).ad > 0 Then
+            ally(x).ad = ally(x).ad - 1
+        Else
+            ally(x).adcol = 0
+        End If
+        If CInt(ally(x).p) = 0 Then ally(x).p = 1
+    Loop Until x = goons
+    Return
+
+    '????????????????????????????????????????????????????????????????????????????
+    'CONTROLS ENEMIES POWER LEVELS
+    '????????????????????????????????????????????????????????????????????????????
+    AIPDEC:
+    x = 0
+    Do
+        x = x + 1
+        If x = eguy Then
+            mul = dec
+        Else
+            mul = inc
+        End If
+        enemy(x).p = (enemy(x).p * mul)
+        If enemy(x).p > enemy(x).mp Then enemy(x).p = enemy(x).mp
+        If CInt(enemy(x).p) = 0 Then enemy(x).p = 1
+    Loop Until x - 1 = enem
+    Return
+
+
+    '????????????????????????????????????????????????????????????????????????????
+    'LONG AND SHORT PAUSES
+    '????????????????????????????????????????????????????????????????????????????
+    lPAUSE:
+    _Delay time1
+    Return
+
+    sPAUSE:
+    _Delay time2
+    Return
+
+
+    '????????????????????????????????????????????????????????????????????????????
+    'WHEN GEFION AND ALLIES WIN
+    '????????????????????????????????????????????????????????????????????????????
+    victory:
+    x = 0
+    Do
+        x = x + 1
+        TOTALHEALTH = ally(x).h + TOTALHEALTH
+        ally(x).p = ally(x).mp
+        TOTALPOWER = ally(x).p + TOTALPOWER
+    Loop Until x = goons
+    etime = Timer
+    pin = ((ETOTALPOWER) / (TOTALPOWER))
+    Cls 0
+    Screen 12
+    Draw "bu180 bl157"
+    Draw y$
+    Draw o$
+    Draw u$
+    Draw "br45"
+    Draw w$
+    Draw o$
+    Draw n$
+    Color 15
+    Locate 10, 39
+    Print "POWER"
+    Locate 10, 46
+    Print "NEW POWER"
+    Draw "c9 BL158 BD100 BL130 r260 d80 l260 u80 d16 r260 l260 d16 r260 l260 d16 r260 l260 d16 r260 l260 d16 u80"
+    Draw "br110 d80 u80 br50 d80 u80 br50 d80  u80 br50 d80 u80  bl260 "
+    Draw "R110 U16 R150 D16 U16 L100 D16  L160 "
+    Locate 19, 36
+    Print "STATISTICS"
+    Locate 20, 26
+    Print "EFFICIENCY"
+    Locate 20, 42
+    effic = CInt(((TOTALHEALTH - htake) / (TOTALHEALTH)) * 100)
+    If effic < 0 Then effic = 0
+    Print effic; "%"
+    Locate 21, 26
+    Print "TURNS"
+    Locate 21, 42
+    Print bturn
+    Locate 22, 26
+    Print "TIME TAKEN"
+    sec = 0
+    Do
+        If (etime - btime) >= 60 Then
+            btime = btime + 60
+            sec = sec + 1
+        Else
+            Exit Do
+        End If
+    Loop
+    Locate 22, 42
+    Print sec; "Min"; CInt(etime - btime); "Sec"
+    Draw "c9 bd128 r260 d64 l260 u64 d16 r260 l260 d16 r260 l260 d16 r260 l260 d16 u64 d16 r140 d48 bu64 l140 bu128 "
+    Locate 26, 36
+    Print "SALVAGE"
+    Locate 27, 26
+    Print "CASH"
+    Locate 27, 43
+    Print state.cash
+    Draw "c9 bd240 r260 d33 l260 u33 d15 r260 l260 u15 br140 bd16 d16 bu33  bl140 bu239 "
+    x = 0
+    Do
+        x = x + 1
+        Locate x + 10, 26
+        Print UCase$(ally(x).NAMES)
+    Loop Until x = goons
+    x = 0
+    Do
+        x = x + 1
+        Locate x + 10, 39
+        If ally(x).exist = 1 Then Print CInt(ally(x).p)
+    Loop Until x = goons
+    Color 15
+    Locate 10, 39
+    Print "POWER"
+    Locate 10, 46
+    Print "NEW POWER"
+    GoSub drawframe
+    If settings.sounds = 1 Then Play "l10 o3 c e- g c e- g# e- a#"
+    Do
+    Loop While InKey$ = ""
+    x = 0
+    Do
+        x = x + 1
+        If ally(x).exist = 1 Then
+            Locate x + 10, 45
+            plus = CInt((pin * ally(x).p) / 20)
+            If plus < 1 Then plus = 1
+            ally(x).p = ally(x).p + plus
+            Color 10
+            Print "+"; plus
+            Color 15
+            GoSub drawframe
+            If settings.sounds = 1 Then Play "mb L64 N65 N66 N67 N68 N69 N70 N71 N72 N73 N74 N75 N76 N77 N78 N79 N80"
+            GoSub lPAUSE
+        End If
+    Loop Until x = goons
+    Color 15
+    x = 0
+    Do
+        x = x + 1
+        If ally(x).exist = 1 Then
+            Locate x + 10, 51
+            Print CInt(ally(x).p)
+        End If
+    Loop Until x = goons
+    Color 15
+    Locate 10, 39
+    Print "POWER"
+    Locate 10, 46
+    Print "NEW POWER"
+    GoSub drawframe
+    If settings.sounds = 1 Then Play " L20 G A B > D# <"
+    If context.batcash > 0 Then
+        GoSub lPAUSE
+        OCASH = state.cash
+        Do
+            OCASH = OCASH + 1
+            Locate 27, 43
+            Print OCASH
+            If settings.sounds = 1 Then Play "L60 MB >>>C<<<"
+            _Delay 0.05
+            CHOR$ = InKey$
+        Loop Until OCASH >= (state.cash + context.batcash) Or CHOR$ = Chr$(32)
+        state.cash = (state.cash + context.batcash)
+        Locate 27, 43
+        Print state.cash
+    End If
+    Do: Loop While InKey$ = ""
+    doBattle = 1
+    Exit Function
+
+    '????????????????????????????????????????????????????????????????????????????
+    'CONTROLS GEFIONS AND ALLIES LOSE
+    '????????????????????????????????????????????????????????????????????????????
+    loss:
+    Cls 0
+    Draw "BU180 BL180"
+    Draw y$
+    Draw o$
+    Draw u$
+    Draw "BR45"
+    Draw l$
+    Draw o$
+    Draw s$
+    Draw e$
+    Draw "BL180"
+    If settings.sounds = 1 Then Play "MB L8 o3 L7  G3 L6  D L5 G- L4 G  L4 B L3 G L1 C"
+    Do: Loop While InKey$ = ""
+    doBattle = 0
+    Exit Function
+
+    '????????????????????????????????????????????????????????????????????????????
+    'HELPS DRAW VICTORY SCREENS
+    '????????????????????????????????????????????????????????????????????????????
+    drawframe:
+    Draw "c9  r260 d80 l260 u80 d16 r260 l260 d16 r260 l260 d16 r260 l260 d16 r260 l260 d16 u80"
+    Draw "br110 d80 u80 br50 d80 u80 br50 d80  u80 br50 d80 u80  bl260 "
+    Draw "R110 U16 R150 D16 U16 L100 D16  L160 "
+    Return
+
+    'ATTACKING AND HEALING FORMULAS BELOW    (PLAY BALANCING CENTRAL)
+    '****************************************************************************
+    '* ATTACKING FORMULA                                                        *
+    '* THIS IS IN A NUMBER OF PARTS                                             *
+    '* FIRST  THE EFFECT OF RANGE ON COMBAT (CRANGE)                            *
+    '* THEN CAUCULATES ATTACK STRENGTH  (ATTACK)                                *
+    '* THEN USES RANDOMISED FORMULA TO CAUCULATE HIT OR MISS  (HIT)             *
+    '****************************************************************************
+    '* VARIABLE DEFINITIONS                                                     *
+    '* BRANGE = BATTLE RANGE                                                    *
+    '* RANGE = ATTACKERS RANGE                                                  *
+    '* ATTACKP = ATTACKERS WEAPON POWER                                         *
+    '* AP = ATTACKERS POWER LEVEL                                               *
+    '* P = GUY BEING ATTACKEDS POWER LEVEL                                      *
+    '* ACC = ATTACKERS ACCURACY                                                 *
+    '****************************************************************************
+    attackform:
+    crange = (context.brange / range)
+    If crange < 1 Then crange = 1
+
+    Randomize Timer
+    luck = (Rnd * 9) + 1
+    attack = ((((((AP / 10) * attackp) / crange) / 15) / (p / 30)) + luck)
+
+    ghit = 12
+    MISS = 0
+
+    Randomize Timer
+    HIT = (Rnd * ((acc * 5) / crange)) + 1
+    HIT = 5! - HIT
+
+    If HIT >= 0 Then
+        MISS = 1
+        attack = 0
+    End If
+    Return
+
+    '****************************************************************************
+
+    '****************************************************************************
+    '* HEALING                                                                  *
+    '* HP = HEALERS POWER LEVEL                                                 *
+    '****************************************************************************
+    healform:
+    Randomize Timer
+    luck = (Rnd * 900) + 100
+    context.healer = ((((hp * (hp * 5)) + luck) / 1000) * 4)
+    Return
+    '****************************************************************************
+
+    '****************************************************************************
+    '* DEFENDING FORMULA                                                        *
+    '* NOTE:ALWAYS ENDS UP AROUND 2-3 WHEN  0<DP<100                            *
+    '* THERE IS A REASON FOR THIS TINY VARIATION ATTACKS ARE DIVIDED BY DEFENDOR*
+    '* DP = GUY BEING DEFENDED'S POWER (POOR ENGLISH I KNOW)                    *
+    '****************************************************************************
+    DEFENDFORM:
+    DEFENDOR = (((DP / 1.5) * (DP / 100)) / (DP * (DP / (DP / (DP - (DP - 1)))))) * 5
+    If DEFENDOR < 2 Then DEFENDOR = 2
+    Return
+    '****************************************************************************
+
+
+    '$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$
+    '                                  THE END
+    '$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$
+End Function
